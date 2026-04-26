@@ -1,0 +1,162 @@
+{% extends "base.html" %}
+
+{% block title %}Задачи совещания - НИИ АЭМ{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1">
+            <li class="breadcrumb-item"><a href="{{ url_for('meetings.index') }}">Совещания</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('meetings.view', id=meeting.id) }}">{{ meeting.title[:30] }}...</a></li>
+            <li class="breadcrumb-item active">Задачи</li>
+        </ol>
+    </nav>
+    <h1><i class="bi bi-list-task"></i> Задачи и поручения</h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Добавление задачи -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-plus-circle"></i> Добавить задачу
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <div class="row">
+                        <div class="col-md-12 mb-3">
+                            <label for="description" class="form-label">Описание задачи *</label>
+                            <textarea class="form-control" id="description" name="description" rows="2" required></textarea>
+                        </div>
+                    </div>
+                    <div class="row">
+                        <div class="col-md-6 mb-3">
+                            <label for="responsible_id" class="form-label">Ответственный *</label>
+                            <select class="form-select" id="responsible_id" name="responsible_id" required>
+                                <option value="">-- Выберите --</option>
+                                {% for emp in employees %}
+                                <option value="{{ emp.id }}">{{ emp.full_name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4 mb-3">
+                            <label for="deadline" class="form-label">Срок исполнения</label>
+                            <input type="date" class="form-control" id="deadline" name="deadline">
+                        </div>
+                        <div class="col-md-2 d-flex align-items-end mb-3">
+                            <button type="submit" class="btn btn-primary w-100">
+                                <i class="bi bi-plus"></i> Добавить
+                            </button>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+        
+        <!-- Список задач -->
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-list-check"></i> Список задач ({{ meeting.protocol.tasks.count() if meeting.protocol else 0 }})
+            </div>
+            <div class="card-body">
+                {% if meeting.protocol and meeting.protocol.tasks.count() > 0 %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th width="40%">Задача</th>
+                                <th>Ответственный</th>
+                                <th>Срок</th>
+                                <th>Статус</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for task in meeting.protocol.tasks %}
+                            <tr class="{{ 'table-success' if task.status == 'completed' else 'table-danger' if task.deadline and task.deadline < today and task.status not in ['completed'] }}">
+                                <td>{{ task.description }}</td>
+                                <td>
+                                    {% if task.responsible %}
+                                    <a href="{{ url_for('employees.view', id=task.responsible.id) }}">
+                                        {{ task.responsible.short_name }}
+                                    </a>
+                                    {% else %}
+                                    -
+                                    {% endif %}
+                                </td>
+                                <td>{{ task.deadline.strftime('%d.%m.%Y') if task.deadline else '-' }}</td>
+                                <td>
+                                    <span class="badge bg-{{ 'success' if task.status == 'completed' else 'primary' if task.status == 'in_progress' else 'danger' if task.status == 'overdue' else 'secondary' }}">
+                                        {{ task.status_display }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="btn-group btn-group-sm">
+                                        <button type="button" class="btn btn-outline-secondary dropdown-toggle" 
+                                                data-bs-toggle="dropdown">
+                                            <i class="bi bi-three-dots"></i>
+                                        </button>
+                                        <ul class="dropdown-menu dropdown-menu-end">
+                                            <li>
+                                                <form action="{{ url_for('meetings.update_task', id=task.id) }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                                    <input type="hidden" name="status" value="in_progress">
+                                                    <button type="submit" class="dropdown-item">
+                                                        <i class="bi bi-play"></i> В работу
+                                                    </button>
+                                                </form>
+                                            </li>
+                                            <li>
+                                                <form action="{{ url_for('meetings.update_task', id=task.id) }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                                    <input type="hidden" name="status" value="completed">
+                                                    <button type="submit" class="dropdown-item">
+                                                        <i class="bi bi-check-lg"></i> Выполнено
+                                                    </button>
+                                                </form>
+                                            </li>
+                                            <li><hr class="dropdown-divider"></li>
+                                            <li>
+                                                <form action="{{ url_for('meetings.delete_task', id=task.id) }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                                    <button type="submit" class="dropdown-item text-danger" 
+                                                            onclick="return confirm('Удалить задачу?')">
+                                                        <i class="bi bi-trash"></i> Удалить
+                                                    </button>
+                                                </form>
+                                            </li>
+                                        </ul>
+                                    </div>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center mb-0">
+                    <i class="bi bi-clipboard-x"></i> Задачи ещё не добавлены
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-arrow-left-circle"></i> Навигация
+            </div>
+            <div class="card-body d-grid gap-2">
+                <a href="{{ url_for('meetings.view', id=meeting.id) }}" class="btn btn-outline-primary">
+                    <i class="bi bi-eye"></i> К совещанию
+                </a>
+                <a href="{{ url_for('meetings.protocol', id=meeting.id) }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-file-text"></i> К протоколу
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

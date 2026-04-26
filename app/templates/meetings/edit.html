@@ -1,0 +1,126 @@
+{% extends "base.html" %}
+
+{% block title %}Редактирование совещания - НИИ АЭМ{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1">
+            <li class="breadcrumb-item"><a href="{{ url_for('meetings.index') }}">Совещания</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('meetings.view', id=meeting.id) }}">{{ meeting.title[:30] }}...</a></li>
+            <li class="breadcrumb-item active">Редактирование</li>
+        </ol>
+    </nav>
+    <h1><i class="bi bi-pencil"></i> Редактирование совещания</h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Название совещания *</label>
+                        <input type="text" class="form-control" id="title" name="title" 
+                               value="{{ meeting.title }}" required>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="date" class="form-label">Дата *</label>
+                            <input type="date" class="form-control" id="date" name="date" 
+                                   value="{{ meeting.date.strftime('%Y-%m-%d') }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="start_time" class="form-label">Начало *</label>
+                            <input type="time" class="form-control" id="start_time" name="start_time" 
+                                   value="{{ meeting.start_time.strftime('%H:%M') }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="end_time" class="form-label">Окончание *</label>
+                            <input type="time" class="form-control" id="end_time" name="end_time" 
+                                   value="{{ meeting.end_time.strftime('%H:%M') }}" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="type_id" class="form-label">Тип совещания</label>
+                            <select class="form-select" id="type_id" name="type_id">
+                                <option value="">-- Не выбран --</option>
+                                {% for type in types %}
+                                <option value="{{ type.id }}" {{ 'selected' if meeting.type_id == type.id }}>
+                                    {{ type.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="room_id" class="form-label">Переговорная</label>
+                            <select class="form-select" id="room_id" name="room_id">
+                                <option value="">-- Не выбрана --</option>
+                                {% for room in rooms %}
+                                <option value="{{ room.id }}" {{ 'selected' if meeting.room_id == room.id }}>
+                                    {{ room.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="status" class="form-label">Статус</label>
+                            <select class="form-select" id="status" name="status">
+                                <option value="planned" {{ 'selected' if meeting.status == 'planned' }}>Запланировано</option>
+                                <option value="ongoing" {{ 'selected' if meeting.status == 'ongoing' }}>Проводится</option>
+                                <option value="completed" {{ 'selected' if meeting.status == 'completed' }}>Завершено</option>
+                                <option value="cancelled" {{ 'selected' if meeting.status == 'cancelled' }}>Отменено</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="organizer_id" class="form-label">Организатор *</label>
+                        <select class="form-select" id="organizer_id" name="organizer_id" required>
+                            <option value="">-- Выберите организатора --</option>
+                            {% for emp in employees %}
+                            <option value="{{ emp.id }}" {{ 'selected' if meeting.organizer_id == emp.id }}>
+                                {{ emp.full_name }} - {{ emp.position }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="participants" class="form-label">Участники</label>
+                        <select class="form-select" id="participants" name="participants" multiple size="6">
+                            {% set participant_ids = meeting.participants|map(attribute='id')|list %}
+                            {% for emp in employees %}
+                            <option value="{{ emp.id }}" {{ 'selected' if emp.id in participant_ids }}>
+                                {{ emp.full_name }} - {{ emp.position }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Описание</label>
+                        <textarea class="form-control" id="description" name="description" rows="3">{{ meeting.description or '' }}</textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="agenda" class="form-label">Повестка дня</label>
+                        <textarea class="form-control" id="agenda" name="agenda" rows="4">{{ meeting.agenda or '' }}</textarea>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg"></i> Сохранить
+                        </button>
+                        <a href="{{ url_for('meetings.view', id=meeting.id) }}" class="btn btn-secondary">Отмена</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,214 @@
+{% extends "base.html" %}
+
+{% block title %}{{ meeting.title }} - НИИ АЭМ{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a href="{{ url_for('meetings.index') }}">Совещания</a></li>
+                <li class="breadcrumb-item active">{{ meeting.title[:50] }}...</li>
+            </ol>
+        </nav>
+        <h1>{{ meeting.title }}</h1>
+    </div>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('meetings.edit', id=meeting.id) }}" class="btn btn-outline-primary">
+            <i class="bi bi-pencil"></i> Редактировать
+        </a>
+        {% if meeting.status == 'planned' %}
+        <form action="{{ url_for('meetings.complete', id=meeting.id) }}" method="POST" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+            <button type="submit" class="btn btn-success">
+                <i class="bi bi-check-lg"></i> Завершить
+            </button>
+        </form>
+        {% endif %}
+    </div>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <!-- Основная информация -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-info-circle"></i> Информация о совещании</span>
+                <span class="badge bg-{{ 'success' if meeting.status == 'completed' else 'warning' if meeting.status == 'ongoing' else 'secondary' if meeting.status == 'cancelled' else 'primary' }} fs-6">
+                    {{ meeting.status_display }}
+                </span>
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="40%"><i class="bi bi-calendar3"></i> Дата:</th>
+                                <td>{{ meeting.date.strftime('%d %B %Y') }}</td>
+                            </tr>
+                            <tr>
+                                <th><i class="bi bi-clock"></i> Время:</th>
+                                <td>{{ meeting.start_time.strftime('%H:%M') }} - {{ meeting.end_time.strftime('%H:%M') }} ({{ meeting.duration_minutes }} мин)</td>
+                            </tr>
+                            <tr>
+                                <th><i class="bi bi-geo-alt"></i> Место:</th>
+                                <td>
+                                    {% if meeting.room %}
+                                    <a href="{{ url_for('rooms.view', id=meeting.room.id) }}">{{ meeting.room.name }}</a>
+                                    <br><small class="text-muted">{{ meeting.room.location }}</small>
+                                    {% else %}
+                                    <span class="text-muted">Не указано</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="40%"><i class="bi bi-person"></i> Организатор:</th>
+                                <td>
+                                    {% if meeting.organizer %}
+                                    <a href="{{ url_for('employees.view', id=meeting.organizer.id) }}">
+                                        {{ meeting.organizer.full_name }}
+                                    </a>
+                                    <br><small class="text-muted">{{ meeting.organizer.position }}</small>
+                                    {% else %}
+                                    <span class="text-muted">Не указан</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th><i class="bi bi-tag"></i> Тип:</th>
+                                <td>
+                                    {% if meeting.meeting_type %}
+                                    <span class="badge" style="background-color: {{ meeting.meeting_type.color }}">
+                                        {{ meeting.meeting_type.name }}
+                                    </span>
+                                    {% else %}
+                                    <span class="text-muted">Не указан</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th><i class="bi bi-calendar-plus"></i> Создано:</th>
+                                <td>{{ meeting.created_at.strftime('%d.%m.%Y %H:%M') }}</td>
+                            </tr>
+                        </table>
+                    </div>
+                </div>
+                
+                {% if meeting.description %}
+                <hr>
+                <h6><i class="bi bi-text-paragraph"></i> Описание</h6>
+                <p>{{ meeting.description }}</p>
+                {% endif %}
+                
+                {% if meeting.agenda %}
+                <hr>
+                <h6><i class="bi bi-list-ol"></i> Повестка дня</h6>
+                <pre class="bg-light p-3 rounded">{{ meeting.agenda }}</pre>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Протокол -->
+        <div class="card mb-4">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-file-text"></i> Протокол совещания</span>
+                <a href="{{ url_for('meetings.protocol', id=meeting.id) }}" class="btn btn-sm btn-outline-primary">
+                    {% if meeting.protocol %}
+                    <i class="bi bi-pencil"></i> Редактировать
+                    {% else %}
+                    <i class="bi bi-plus"></i> Создать
+                    {% endif %}
+                </a>
+            </div>
+            <div class="card-body">
+                {% if meeting.protocol %}
+                <p><strong>Номер:</strong> {{ meeting.protocol.number or 'Не указан' }}</p>
+                {% if meeting.protocol.secretary %}
+                <p><strong>Секретарь:</strong> {{ meeting.protocol.secretary.full_name }}</p>
+                {% endif %}
+                {% if meeting.protocol.content %}
+                <h6>Содержание:</h6>
+                <p>{{ meeting.protocol.content }}</p>
+                {% endif %}
+                {% if meeting.protocol.decisions %}
+                <h6>Решения:</h6>
+                <pre class="bg-light p-3 rounded">{{ meeting.protocol.decisions }}</pre>
+                {% endif %}
+                
+                <a href="{{ url_for('meetings.tasks', id=meeting.id) }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-list-task"></i> Задачи ({{ meeting.protocol.tasks.count() }})
+                </a>
+                {% else %}
+                <p class="text-muted text-center mb-0">
+                    <i class="bi bi-file-earmark-x"></i> Протокол ещё не создан
+                </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <!-- Участники -->
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-people"></i> Участники ({{ meeting.participants|length }})
+            </div>
+            <div class="card-body">
+                {% if meeting.participants %}
+                <ul class="list-group list-group-flush">
+                    {% for participant in meeting.participants %}
+                    <li class="list-group-item px-0">
+                        <a href="{{ url_for('employees.view', id=participant.id) }}" class="text-decoration-none">
+                            <i class="bi bi-person"></i> {{ participant.full_name }}
+                        </a>
+                        <br><small class="text-muted">{{ participant.position }}</small>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted text-center mb-0">Участники не указаны</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Действия -->
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-gear"></i> Действия
+            </div>
+            <div class="card-body d-grid gap-2">
+                <a href="{{ url_for('meetings.edit', id=meeting.id) }}" class="btn btn-outline-primary">
+                    <i class="bi bi-pencil"></i> Редактировать
+                </a>
+                <a href="{{ url_for('meetings.protocol', id=meeting.id) }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-file-text"></i> Протокол
+                </a>
+                <a href="{{ url_for('meetings.tasks', id=meeting.id) }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-list-task"></i> Задачи
+                </a>
+                {% if meeting.status == 'planned' %}
+                <hr>
+                <form action="{{ url_for('meetings.cancel', id=meeting.id) }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="btn btn-outline-danger w-100" 
+                            onclick="return confirm('Отменить совещание?')">
+                        <i class="bi bi-x-circle"></i> Отменить совещание
+                    </button>
+                </form>
+                {% endif %}
+                <form action="{{ url_for('meetings.delete', id=meeting.id) }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="btn btn-danger w-100" 
+                            onclick="return confirm('Вы уверены? Это действие нельзя отменить.')">
+                        <i class="bi bi-trash"></i> Удалить
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

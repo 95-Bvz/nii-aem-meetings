@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+
+{% block title %}Статистика - НИИ АЭМ{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1">
+            <li class="breadcrumb-item"><a href="{{ url_for('reports.index') }}">Отчёты</a></li>
+            <li class="breadcrumb-item active">Общая статистика</li>
+        </ol>
+    </nav>
+    <h1><i class="bi bi-graph-up"></i> Общая статистика</h1>
+</div>
+
+<div class="row">
+    <!-- График по месяцам -->
+    <div class="col-lg-8 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-bar-chart"></i> Совещания по месяцам
+            </div>
+            <div class="card-body">
+                <canvas id="monthlyChart" height="100"></canvas>
+            </div>
+        </div>
+    </div>
+    
+    <!-- По типам -->
+    <div class="col-lg-4 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-pie-chart"></i> По типам совещаний
+            </div>
+            <div class="card-body">
+                {% if type_stats %}
+                <canvas id="typeChart" height="200"></canvas>
+                {% else %}
+                <p class="text-muted text-center">Нет данных</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Топ организаторов -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-trophy"></i> Топ организаторов
+            </div>
+            <div class="card-body">
+                {% if top_organizers %}
+                <ul class="list-group list-group-flush">
+                    {% for emp, count in top_organizers %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <div>
+                            <a href="{{ url_for('employees.view', id=emp.id) }}">{{ emp.full_name }}</a>
+                            <br><small class="text-muted">{{ emp.position }}</small>
+                        </div>
+                        <span class="badge bg-primary rounded-pill">{{ count }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted text-center mb-0">Нет данных</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <!-- Топ комнат -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-door-open"></i> Популярные переговорные
+            </div>
+            <div class="card-body">
+                {% if top_rooms %}
+                <ul class="list-group list-group-flush">
+                    {% for room, count in top_rooms %}
+                    <li class="list-group-item d-flex justify-content-between align-items-center px-0">
+                        <div>
+                            <a href="{{ url_for('rooms.view', id=room.id) }}">{{ room.name }}</a>
+                            <br><small class="text-muted">{{ room.location }}</small>
+                        </div>
+                        <span class="badge bg-success rounded-pill">{{ count }}</span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted text-center mb-0">Нет данных</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// График по месяцам
+const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+new Chart(monthlyCtx, {
+    type: 'bar',
+    data: {
+        labels: [{% for item in monthly_stats %}'{{ item.month }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            label: 'Совещаний',
+            data: [{% for item in monthly_stats %}{{ item.count }}{% if not loop.last %}, {% endif %}{% endfor %}],
+            backgroundColor: 'rgba(26, 95, 122, 0.7)',
+            borderColor: 'rgba(26, 95, 122, 1)',
+            borderWidth: 1
+        }]
+    },
+    options: {
+        responsive: true,
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    stepSize: 1
+                }
+            }
+        }
+    }
+});
+
+{% if type_stats %}
+// График по типам
+const typeCtx = document.getElementById('typeChart').getContext('2d');
+new Chart(typeCtx, {
+    type: 'doughnut',
+    data: {
+        labels: [{% for name, color, count in type_stats %}'{{ name }}'{% if not loop.last %}, {% endif %}{% endfor %}],
+        datasets: [{
+            data: [{% for name, color, count in type_stats %}{{ count }}{% if not loop.last %}, {% endif %}{% endfor %}],
+            backgroundColor: [{% for name, color, count in type_stats %}'{{ color }}'{% if not loop.last %}, {% endif %}{% endfor %}]
+        }]
+    },
+    options: {
+        responsive: true
+    }
+});
+{% endif %}
+</script>
+{% endblock %}

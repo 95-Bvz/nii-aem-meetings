@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Протокол совещания - НИИ АЭМ{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1">
+            <li class="breadcrumb-item"><a href="{{ url_for('meetings.index') }}">Совещания</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('meetings.view', id=meeting.id) }}">{{ meeting.title[:30] }}...</a></li>
+            <li class="breadcrumb-item active">Протокол</li>
+        </ol>
+    </nav>
+    <h1><i class="bi bi-file-text"></i> Протокол совещания</h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                {{ meeting.title }}
+            </div>
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="number" class="form-label">Номер протокола</label>
+                            <input type="text" class="form-control" id="number" name="number" 
+                                   value="{{ meeting.protocol.number if meeting.protocol else '' }}"
+                                   placeholder="Например: 15/2024">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="secretary_id" class="form-label">Секретарь</label>
+                            <select class="form-select" id="secretary_id" name="secretary_id">
+                                <option value="">-- Не указан --</option>
+                                {% for emp in employees %}
+                                <option value="{{ emp.id }}" 
+                                    {{ 'selected' if meeting.protocol and meeting.protocol.secretary_id == emp.id }}>
+                                    {{ emp.full_name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="content" class="form-label">Содержание</label>
+                        <textarea class="form-control" id="content" name="content" rows="6"
+                                  placeholder="Краткое описание хода совещания...">{{ meeting.protocol.content if meeting.protocol else '' }}</textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="decisions" class="form-label">Принятые решения</label>
+                        <textarea class="form-control" id="decisions" name="decisions" rows="6"
+                                  placeholder="1. Решение первое&#10;2. Решение второе">{{ meeting.protocol.decisions if meeting.protocol else '' }}</textarea>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg"></i> Сохранить протокол
+                        </button>
+                        <a href="{{ url_for('meetings.view', id=meeting.id) }}" class="btn btn-secondary">Назад</a>
+                        {% if meeting.protocol %}
+                        <a href="{{ url_for('meetings.tasks', id=meeting.id) }}" class="btn btn-outline-primary ms-auto">
+                            <i class="bi bi-list-task"></i> Перейти к задачам
+                        </a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-info-circle"></i> Информация о совещании
+            </div>
+            <div class="card-body">
+                <p><strong>Дата:</strong> {{ meeting.date.strftime('%d.%m.%Y') }}</p>
+                <p><strong>Время:</strong> {{ meeting.start_time.strftime('%H:%M') }} - {{ meeting.end_time.strftime('%H:%M') }}</p>
+                <p><strong>Место:</strong> {{ meeting.room.name if meeting.room else 'Не указано' }}</p>
+                <p><strong>Организатор:</strong> {{ meeting.organizer.full_name if meeting.organizer else 'Не указан' }}</p>
+                <p class="mb-0"><strong>Участников:</strong> {{ meeting.participants|length }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

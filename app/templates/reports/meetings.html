@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Отчёт по совещаниям - НИИ АЭМ{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1">
+            <li class="breadcrumb-item"><a href="{{ url_for('reports.index') }}">Отчёты</a></li>
+            <li class="breadcrumb-item active">По совещаниям</li>
+        </ol>
+    </nav>
+    <h1><i class="bi bi-calendar3"></i> Отчёт по совещаниям</h1>
+</div>
+
+<!-- Фильтры -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Дата с</label>
+                <input type="date" class="form-control" name="date_from" value="{{ date_from }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Дата по</label>
+                <input type="date" class="form-control" name="date_to" value="{{ date_to }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Подразделение</label>
+                <select class="form-select" name="department_id">
+                    <option value="">Все</option>
+                    {% for dept in departments %}
+                    <option value="{{ dept.id }}" {{ 'selected' if request.args.get('department_id', '')|int == dept.id }}>
+                        {{ dept.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-funnel"></i> Применить
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Статистика -->
+<div class="row mb-4">
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-primary">{{ stats.total }}</h3>
+                <small class="text-muted">Всего</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-success">{{ stats.completed }}</h3>
+                <small class="text-muted">Проведено</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-warning">{{ stats.planned }}</h3>
+                <small class="text-muted">Запланировано</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-danger">{{ stats.cancelled }}</h3>
+                <small class="text-muted">Отменено</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-info">{{ (stats.total_duration / 60)|round(1) }}</h3>
+                <small class="text-muted">Часов</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-secondary">{{ stats.avg_participants|round(1) }}</h3>
+                <small class="text-muted">Ср. участников</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Таблица -->
+<div class="card">
+    <div class="card-body">
+        {% if meetings %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Дата</th>
+                        <th>Время</th>
+                        <th>Название</th>
+                        <th>Место</th>
+                        <th>Организатор</th>
+                        <th>Участников</th>
+                        <th>Статус</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for meeting in meetings %}
+                    <tr>
+                        <td>{{ meeting.date.strftime('%d.%m.%Y') }}</td>
+                        <td>{{ meeting.start_time.strftime('%H:%M') }} - {{ meeting.end_time.strftime('%H:%M') }}</td>
+                        <td>
+                            <a href="{{ url_for('meetings.view', id=meeting.id) }}">{{ meeting.title }}</a>
+                        </td>
+                        <td>{{ meeting.room.name if meeting.room else '-' }}</td>
+                        <td>{{ meeting.organizer.short_name if meeting.organizer else '-' }}</td>
+                        <td>{{ meeting.participants|length }}</td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if meeting.status == 'completed' else 'secondary' if meeting.status == 'cancelled' else 'primary' }}">
+                                {{ meeting.status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted text-center mb-0">Нет данных за выбранный период</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

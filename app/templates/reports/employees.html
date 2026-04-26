@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block title %}Активность сотрудников - НИИ АЭМ{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1">
+            <li class="breadcrumb-item"><a href="{{ url_for('reports.index') }}">Отчёты</a></li>
+            <li class="breadcrumb-item active">Активность сотрудников</li>
+        </ol>
+    </nav>
+    <h1><i class="bi bi-people"></i> Активность сотрудников</h1>
+</div>
+
+<!-- Фильтры -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Дата с</label>
+                <input type="date" class="form-control" name="date_from" value="{{ date_from }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Дата по</label>
+                <input type="date" class="form-control" name="date_to" value="{{ date_to }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Подразделение</label>
+                <select class="form-select" name="department_id">
+                    <option value="">Все</option>
+                    {% for dept in departments %}
+                    <option value="{{ dept.id }}" {{ 'selected' if request.args.get('department_id', '')|int == dept.id }}>
+                        {{ dept.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-funnel"></i> Применить
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if employee_stats %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Сотрудник</th>
+                        <th>Подразделение</th>
+                        <th>Участие</th>
+                        <th>Организовано</th>
+                        <th>Ожидающих задач</th>
+                        <th>Выполнено задач</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in employee_stats %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('employees.view', id=item.employee.id) }}">
+                                {{ item.employee.full_name }}
+                            </a>
+                            <br><small class="text-muted">{{ item.employee.position }}</small>
+                        </td>
+                        <td>{{ item.employee.department.name if item.employee.department else '-' }}</td>
+                        <td><span class="badge bg-primary">{{ item.participated }}</span></td>
+                        <td><span class="badge bg-info">{{ item.organized }}</span></td>
+                        <td>
+                            {% if item.pending_tasks > 0 %}
+                            <span class="badge bg-warning">{{ item.pending_tasks }}</span>
+                            {% else %}
+                            <span class="text-muted">0</span>
+                            {% endif %}
+                        </td>
+                        <td><span class="badge bg-success">{{ item.completed_tasks }}</span></td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted text-center mb-0">Нет данных</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

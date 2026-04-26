@@ -1,0 +1,78 @@
+{% extends "base.html" %}
+
+{% block title %}Переговорные комнаты - НИИ АЭМ{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-door-open"></i> Переговорные комнаты</h1>
+    <div class="d-flex gap-2">
+        <a href="{{ url_for('rooms.availability') }}" class="btn btn-outline-primary">
+            <i class="bi bi-calendar-check"></i> Проверить доступность
+        </a>
+        <a href="{{ url_for('rooms.create') }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Добавить комнату
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    {% if rooms %}
+        {% for room in rooms %}
+        <div class="col-md-6 col-lg-4 mb-4">
+            <div class="card h-100 {{ 'opacity-50' if not room.is_active }}">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <span class="fw-semibold">{{ room.name }}</span>
+                    {% if not room.is_active %}
+                    <span class="badge bg-secondary">Неактивна</span>
+                    {% endif %}
+                </div>
+                <div class="card-body">
+                    <p class="text-muted mb-2">
+                        <i class="bi bi-geo-alt"></i> {{ room.location }}
+                    </p>
+                    <p class="mb-2">
+                        <i class="bi bi-people"></i> Вместимость: <strong>{{ room.capacity }}</strong> чел.
+                    </p>
+                    <div class="mb-3">
+                        {% if room.has_projector %}
+                        <span class="badge bg-info"><i class="bi bi-projector"></i> Проектор</span>
+                        {% endif %}
+                        {% if room.has_video_conf %}
+                        <span class="badge bg-success"><i class="bi bi-camera-video"></i> ВКС</span>
+                        {% endif %}
+                        {% if room.has_whiteboard %}
+                        <span class="badge bg-secondary"><i class="bi bi-easel"></i> Доска</span>
+                        {% endif %}
+                    </div>
+                    {% if room.description %}
+                    <p class="small text-muted mb-0">{{ room.description }}</p>
+                    {% endif %}
+                </div>
+                <div class="card-footer bg-transparent">
+                    <div class="d-flex gap-2">
+                        <a href="{{ url_for('rooms.view', id=room.id) }}" class="btn btn-sm btn-outline-primary">
+                            <i class="bi bi-eye"></i> Подробнее
+                        </a>
+                        <a href="{{ url_for('rooms.schedule', id=room.id) }}" class="btn btn-sm btn-outline-secondary">
+                            <i class="bi bi-calendar3"></i> Расписание
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    {% else %}
+    <div class="col-12">
+        <div class="card">
+            <div class="card-body text-center py-5">
+                <i class="bi bi-door-closed" style="font-size: 4rem; color: #dee2e6;"></i>
+                <p class="text-muted mt-3">Переговорные комнаты не добавлены</p>
+                <a href="{{ url_for('rooms.create') }}" class="btn btn-primary">
+                    <i class="bi bi-plus-lg"></i> Добавить первую комнату
+                </a>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

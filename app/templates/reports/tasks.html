@@ -1,0 +1,141 @@
+{% extends "base.html" %}
+
+{% block title %}Отчёт по задачам - НИИ АЭМ{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1">
+            <li class="breadcrumb-item"><a href="{{ url_for('reports.index') }}">Отчёты</a></li>
+            <li class="breadcrumb-item active">По задачам</li>
+        </ol>
+    </nav>
+    <h1><i class="bi bi-list-task"></i> Отчёт по задачам</h1>
+</div>
+
+<!-- Статистика -->
+<div class="row mb-4">
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-primary">{{ stats.total }}</h3>
+                <small class="text-muted">Всего</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-secondary">{{ stats.pending }}</h3>
+                <small class="text-muted">Ожидает</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-info">{{ stats.in_progress }}</h3>
+                <small class="text-muted">В работе</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-success">{{ stats.completed }}</h3>
+                <small class="text-muted">Выполнено</small>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-2">
+        <div class="card text-center">
+            <div class="card-body">
+                <h3 class="text-danger">{{ stats.overdue }}</h3>
+                <small class="text-muted">Просрочено</small>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Фильтры -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Статус</label>
+                <select class="form-select" name="status">
+                    <option value="">Все</option>
+                    <option value="pending" {{ 'selected' if request.args.get('status') == 'pending' }}>Ожидает</option>
+                    <option value="in_progress" {{ 'selected' if request.args.get('status') == 'in_progress' }}>В работе</option>
+                    <option value="completed" {{ 'selected' if request.args.get('status') == 'completed' }}>Выполнено</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Подразделение</label>
+                <select class="form-select" name="department_id">
+                    <option value="">Все</option>
+                    {% for dept in departments %}
+                    <option value="{{ dept.id }}" {{ 'selected' if request.args.get('department_id', '')|int == dept.id }}>
+                        {{ dept.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-funnel"></i> Применить
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if tasks %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Задача</th>
+                        <th>Ответственный</th>
+                        <th>Срок</th>
+                        <th>Совещание</th>
+                        <th>Статус</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for task in tasks %}
+                    <tr class="{{ 'table-danger' if task.deadline and task.deadline < today and task.status not in ['completed'] }}">
+                        <td>{{ task.description[:80] }}{% if task.description|length > 80 %}...{% endif %}</td>
+                        <td>
+                            {% if task.responsible %}
+                            <a href="{{ url_for('employees.view', id=task.responsible.id) }}">
+                                {{ task.responsible.short_name }}
+                            </a>
+                            {% else %}
+                            -
+                            {% endif %}
+                        </td>
+                        <td>{{ task.deadline.strftime('%d.%m.%Y') if task.deadline else '-' }}</td>
+                        <td>
+                            <a href="{{ url_for('meetings.view', id=task.protocol.meeting.id) }}">
+                                {{ task.protocol.meeting.title[:30] }}...
+                            </a>
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if task.status == 'completed' else 'primary' if task.status == 'in_progress' else 'secondary' }}">
+                                {{ task.status_display }}
+                            </span>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted text-center mb-0">Нет задач</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

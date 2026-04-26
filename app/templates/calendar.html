@@ -1,0 +1,121 @@
+{% extends "base.html" %}
+
+{% block title %}Календарь - НИИ АЭМ{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-calendar3"></i> Календарь совещаний</h1>
+    <div class="d-flex gap-2">
+        <select id="roomFilter" class="form-select" style="width: 200px;">
+            <option value="">Все переговорные</option>
+            {% for room in rooms %}
+            <option value="{{ room.id }}">{{ room.name }}</option>
+            {% endfor %}
+        </select>
+        <a href="{{ url_for('meetings.create') }}" class="btn btn-primary">
+            <i class="bi bi-plus-lg"></i> Новое совещание
+        </a>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        <div id="calendar"></div>
+    </div>
+</div>
+
+<!-- Модальное окно для просмотра события -->
+<div class="modal fade" id="eventModal" tabindex="-1">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="eventTitle"></h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body">
+                <p><i class="bi bi-clock"></i> <span id="eventTime"></span></p>
+                <p><i class="bi bi-geo-alt"></i> <span id="eventRoom"></span></p>
+                <p><i class="bi bi-person"></i> <span id="eventOrganizer"></span></p>
+                <p><i class="bi bi-info-circle"></i> Статус: <span id="eventStatus"></span></p>
+            </div>
+            <div class="modal-footer">
+                <a href="#" id="eventLink" class="btn btn-primary">Подробнее</a>
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    var calendarEl = document.getElementById('calendar');
+    var eventModal = new bootstrap.Modal(document.getElementById('eventModal'));
+    
+    var calendar = new FullCalendar.Calendar(calendarEl, {
+        initialView: 'dayGridMonth',
+        locale: 'ru',
+        headerToolbar: {
+            left: 'prev,next today',
+            center: 'title',
+            right: 'dayGridMonth,timeGridWeek,timeGridDay,listWeek'
+        },
+        buttonText: {
+            today: 'Сегодня',
+            month: 'Месяц',
+            week: 'Неделя',
+            day: 'День',
+            list: 'Список'
+        },
+        events: function(info, successCallback, failureCallback) {
+            var roomId = document.getElementById('roomFilter').value;
+            var url = '/api/calendar-events?start=' + info.startStr + '&end=' + info.endStr;
+            if (roomId) {
+                url += '&room_id=' + roomId;
+            }
+            
+            fetch(url)
+                .then(response => response.json())
+                .then(data => successCallback(data))
+                .catch(error => failureCallback(error));
+        },
+        eventClick: function(info) {
+            info.jsEvent.preventDefault();
+            
+            document.getElementById('eventTitle').textContent = info.event.title;
+            document.getElementById('eventTime').textContent = 
+                info.event.start.toLocaleString('ru-RU', {
+                    day: '2-digit',
+                    month: 'long',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                }) + ' - ' + 
+                info.event.end.toLocaleTimeString('ru-RU', {
+                    hour: '2-digit',
+                    minute: '2-digit'
+                });
+            document.getElementById('eventRoom').textContent = info.event.extendedProps.room;
+            document.getElementById('eventOrganizer').textContent = info.event.extendedProps.organizer;
+            document.getElementById('eventStatus').textContent = info.event.extendedProps.status;
+            document.getElementById('eventLink').href = info.event.url;
+            
+            eventModal.show();
+        },
+        slotMinTime: '08:00:00',
+        slotMaxTime: '20:00:00',
+        weekends: true,
+        navLinks: true,
+        dayMaxEvents: true,
+        height: 'auto'
+    });
+    
+    calendar.render();
+    
+    // Фильтр по комнате
+    document.getElementById('roomFilter').addEventListener('change', function() {
+        calendar.refetchEvents();
+    });
+});
+</script>
+{% endblock %}

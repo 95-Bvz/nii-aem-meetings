@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}Совещания - НИИ АЭМ{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-people"></i> Совещания и мероприятия</h1>
+    <a href="{{ url_for('meetings.create') }}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> Новое совещание
+    </a>
+</div>
+
+<!-- Фильтры -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Поиск</label>
+                <input type="text" class="form-control" name="search" 
+                       value="{{ request.args.get('search', '') }}" placeholder="Название совещания...">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Статус</label>
+                <select class="form-select" name="status">
+                    <option value="">Все</option>
+                    <option value="planned" {{ 'selected' if request.args.get('status') == 'planned' }}>Запланировано</option>
+                    <option value="ongoing" {{ 'selected' if request.args.get('status') == 'ongoing' }}>Проводится</option>
+                    <option value="completed" {{ 'selected' if request.args.get('status') == 'completed' }}>Завершено</option>
+                    <option value="cancelled" {{ 'selected' if request.args.get('status') == 'cancelled' }}>Отменено</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Дата с</label>
+                <input type="date" class="form-control" name="date_from" 
+                       value="{{ request.args.get('date_from', '') }}">
+            </div>
+            <div class="col-md-2">
+                <label class="form-label">Дата по</label>
+                <input type="date" class="form-control" name="date_to" 
+                       value="{{ request.args.get('date_to', '') }}">
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2">
+                    <i class="bi bi-search"></i> Найти
+                </button>
+                <a href="{{ url_for('meetings.index') }}" class="btn btn-outline-secondary">Сбросить</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Список совещаний -->
+<div class="card">
+    <div class="card-body">
+        {% if meetings.items %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Дата</th>
+                        <th>Время</th>
+                        <th>Название</th>
+                        <th>Место</th>
+                        <th>Организатор</th>
+                        <th>Участники</th>
+                        <th>Статус</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for meeting in meetings.items %}
+                    <tr class="{{ 'table-secondary' if meeting.status == 'cancelled' }}">
+                        <td>{{ meeting.date.strftime('%d.%m.%Y') }}</td>
+                        <td>{{ meeting.start_time.strftime('%H:%M') }} - {{ meeting.end_time.strftime('%H:%M') }}</td>
+                        <td>
+                            <a href="{{ url_for('meetings.view', id=meeting.id) }}" class="text-decoration-none fw-semibold">
+                                {{ meeting.title }}
+                            </a>
+                            {% if meeting.meeting_type %}
+                            <span class="badge" style="background-color: {{ meeting.meeting_type.color }}">
+                                {{ meeting.meeting_type.name }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td>{{ meeting.room.name if meeting.room else '-' }}</td>
+                        <td>{{ meeting.organizer.short_name if meeting.organizer else '-' }}</td>
+                        <td>
+                            <span class="badge bg-secondary">{{ meeting.participants|length }}</span>
+                        </td>
+                        <td>
+                            <span class="badge bg-{{ 'success' if meeting.status == 'completed' else 'warning' if meeting.status == 'ongoing' else 'secondary' if meeting.status == 'cancelled' else 'primary' }}">
+                                {{ meeting.status_display }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="dropdown">
+                                <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" 
+                                        data-bs-toggle="dropdown">
+                                    <i class="bi bi-three-dots"></i>
+                                </button>
+                                <ul class="dropdown-menu dropdown-menu-end">
+                                    <li><a class="dropdown-item" href="{{ url_for('meetings.view', id=meeting.id) }}">
+                                        <i class="bi bi-eye"></i> Просмотр
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('meetings.edit', id=meeting.id) }}">
+                                        <i class="bi bi-pencil"></i> Редактировать
+                                    </a></li>
+                                    <li><a class="dropdown-item" href="{{ url_for('meetings.protocol', id=meeting.id) }}">
+                                        <i class="bi bi-file-text"></i> Протокол
+                                    </a></li>
+                                    <li><hr class="dropdown-divider"></li>
+                                    {% if meeting.status == 'planned' %}
+                                    <li>
+                                        <form action="{{ url_for('meetings.cancel', id=meeting.id) }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                            <button type="submit" class="dropdown-item text-danger" 
+                                                    onclick="return confirm('Отменить совещание?')">
+                                                <i class="bi bi-x-circle"></i> Отменить
+                                            </button>
+                                        </form>
+                                    </li>
+                                    {% endif %}
+                                </ul>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Пагинация -->
+        {% if meetings.pages > 1 %}
+        <nav aria-label="Навигация по страницам">
+            <ul class="pagination justify-content-center mb-0">
+                {% if meetings.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('meetings.index', page=meetings.prev_num, **dict(request.args|items|rejectattr(0, 'equalto', 'page'))) }}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for page_num in meetings.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                    {% if page_num %}
+                    <li class="page-item {{ 'active' if page_num == meetings.page }}">
+                        <a class="page-link" href="{{ url_for('meetings.index', page=page_num, **dict(request.args|items|rejectattr(0, 'equalto', 'page'))) }}">
+                            {{ page_num }}
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if meetings.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('meetings.index', page=meetings.next_num, **dict(request.args|items|rejectattr(0, 'equalto', 'page'))) }}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-calendar-x" style="font-size: 4rem; color: #dee2e6;"></i>
+            <p class="text-muted mt-3">Совещания не найдены</p>
+            <a href="{{ url_for('meetings.create') }}" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> Создать первое совещание
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

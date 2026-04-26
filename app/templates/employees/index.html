@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+
+{% block title %}Сотрудники - НИИ АЭМ{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-person-badge"></i> Сотрудники</h1>
+    <a href="{{ url_for('employees.create') }}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> Добавить сотрудника
+    </a>
+</div>
+
+<!-- Фильтры -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Поиск</label>
+                <input type="text" class="form-control" name="search" 
+                       value="{{ request.args.get('search', '') }}" placeholder="ФИО или должность...">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Подразделение</label>
+                <select class="form-select" name="department_id">
+                    <option value="">Все подразделения</option>
+                    {% for dept in departments %}
+                    <option value="{{ dept.id }}" {{ 'selected' if request.args.get('department_id', '')|int == dept.id }}>
+                        {{ dept.name }}
+                    </option>
+                    {% endfor %}
+                </select>
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary me-2">
+                    <i class="bi bi-search"></i> Найти
+                </button>
+                <a href="{{ url_for('employees.index') }}" class="btn btn-outline-secondary">Сбросить</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- Список сотрудников -->
+<div class="card">
+    <div class="card-body">
+        {% if employees.items %}
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>ФИО</th>
+                        <th>Должность</th>
+                        <th>Подразделение</th>
+                        <th>Email</th>
+                        <th>Телефон</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for emp in employees.items %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('employees.view', id=emp.id) }}" class="text-decoration-none fw-semibold">
+                                {{ emp.full_name }}
+                            </a>
+                        </td>
+                        <td>{{ emp.position }}</td>
+                        <td>{{ emp.department.name if emp.department else '-' }}</td>
+                        <td>{{ emp.email or '-' }}</td>
+                        <td>{{ emp.phone or '-' }}</td>
+                        <td>
+                            <div class="btn-group btn-group-sm">
+                                <a href="{{ url_for('employees.view', id=emp.id) }}" class="btn btn-outline-primary">
+                                    <i class="bi bi-eye"></i>
+                                </a>
+                                <a href="{{ url_for('employees.edit', id=emp.id) }}" class="btn btn-outline-secondary">
+                                    <i class="bi bi-pencil"></i>
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        
+        <!-- Пагинация -->
+        {% if employees.pages > 1 %}
+        <nav aria-label="Навигация по страницам">
+            <ul class="pagination justify-content-center mb-0">
+                {% if employees.has_prev %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('employees.index', page=employees.prev_num, **dict(request.args|items|rejectattr(0, 'equalto', 'page'))) }}">
+                        <i class="bi bi-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+                
+                {% for page_num in employees.iter_pages(left_edge=1, right_edge=1, left_current=2, right_current=2) %}
+                    {% if page_num %}
+                    <li class="page-item {{ 'active' if page_num == employees.page }}">
+                        <a class="page-link" href="{{ url_for('employees.index', page=page_num, **dict(request.args|items|rejectattr(0, 'equalto', 'page'))) }}">
+                            {{ page_num }}
+                        </a>
+                    </li>
+                    {% else %}
+                    <li class="page-item disabled"><span class="page-link">...</span></li>
+                    {% endif %}
+                {% endfor %}
+                
+                {% if employees.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="{{ url_for('employees.index', page=employees.next_num, **dict(request.args|items|rejectattr(0, 'equalto', 'page'))) }}">
+                        <i class="bi bi-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+        {% endif %}
+        {% else %}
+        <div class="text-center py-5">
+            <i class="bi bi-person-x" style="font-size: 4rem; color: #dee2e6;"></i>
+            <p class="text-muted mt-3">Сотрудники не найдены</p>
+            <a href="{{ url_for('employees.create') }}" class="btn btn-primary">
+                <i class="bi bi-plus-lg"></i> Добавить первого сотрудника
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

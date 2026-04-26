@@ -1,0 +1,96 @@
+{% extends "base.html" %}
+
+{% block title %}Типы совещаний - НИИ АЭМ{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-tags"></i> Типы совещаний</h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-list"></i> Список типов
+            </div>
+            <div class="card-body">
+                {% if types %}
+                <div class="table-responsive">
+                    <table class="table table-hover">
+                        <thead>
+                            <tr>
+                                <th>Название</th>
+                                <th>Цвет</th>
+                                <th>Описание</th>
+                                <th>Совещаний</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for type in types %}
+                            <tr>
+                                <td>
+                                    <span class="badge" style="background-color: {{ type.color }}">
+                                        {{ type.name }}
+                                    </span>
+                                </td>
+                                <td>
+                                    <div class="d-flex align-items-center">
+                                        <div style="width: 24px; height: 24px; background-color: {{ type.color }}; border-radius: 4px; margin-right: 8px;"></div>
+                                        {{ type.color }}
+                                    </div>
+                                </td>
+                                <td>{{ type.description or '-' }}</td>
+                                <td>{{ type.meetings.count() }}</td>
+                                <td>
+                                    <form action="{{ url_for('meetings.delete_type', id=type.id) }}" method="POST" class="d-inline">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                                        <button type="submit" class="btn btn-sm btn-outline-danger" 
+                                                onclick="return confirm('Удалить тип?')">
+                                            <i class="bi bi-trash"></i>
+                                        </button>
+                                    </form>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+                {% else %}
+                <p class="text-muted text-center mb-0">Типы совещаний не созданы</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-plus-circle"></i> Новый тип
+            </div>
+            <div class="card-body">
+                <form method="POST" action="{{ url_for('meetings.create_type') }}">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Название *</label>
+                        <input type="text" class="form-control" id="name" name="name" required
+                               placeholder="Например: Планёрка">
+                    </div>
+                    <div class="mb-3">
+                        <label for="color" class="form-label">Цвет</label>
+                        <input type="color" class="form-control form-control-color w-100" 
+                               id="color" name="color" value="#3788d8">
+                    </div>
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Описание</label>
+                        <textarea class="form-control" id="description" name="description" rows="2"></textarea>
+                    </div>
+                    <button type="submit" class="btn btn-primary w-100">
+                        <i class="bi bi-plus"></i> Создать
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

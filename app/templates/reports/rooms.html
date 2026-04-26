@@ -1,0 +1,82 @@
+{% extends "base.html" %}
+
+{% block title %}Загрузка переговорных - НИИ АЭМ{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1">
+            <li class="breadcrumb-item"><a href="{{ url_for('reports.index') }}">Отчёты</a></li>
+            <li class="breadcrumb-item active">Загрузка переговорных</li>
+        </ol>
+    </nav>
+    <h1><i class="bi bi-door-open"></i> Загрузка переговорных комнат</h1>
+</div>
+
+<!-- Фильтры -->
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-4">
+                <label class="form-label">Дата с</label>
+                <input type="date" class="form-control" name="date_from" value="{{ date_from }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Дата по</label>
+                <input type="date" class="form-control" name="date_to" value="{{ date_to }}">
+            </div>
+            <div class="col-md-4 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary">
+                    <i class="bi bi-funnel"></i> Применить
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="card">
+    <div class="card-body">
+        {% if room_stats %}
+        <div class="table-responsive">
+            <table class="table">
+                <thead>
+                    <tr>
+                        <th>Комната</th>
+                        <th>Совещаний</th>
+                        <th>Часов</th>
+                        <th>Загрузка</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in room_stats %}
+                    <tr>
+                        <td>
+                            <a href="{{ url_for('rooms.view', id=item.room.id) }}">
+                                {{ item.room.name }}
+                            </a>
+                            <br><small class="text-muted">{{ item.room.location }}</small>
+                        </td>
+                        <td>{{ item.meetings_count }}</td>
+                        <td>{{ item.total_hours }}</td>
+                        <td style="width: 40%;">
+                            <div class="d-flex align-items-center">
+                                <div class="progress flex-grow-1" style="height: 20px;">
+                                    <div class="progress-bar bg-{{ 'danger' if item.utilization > 80 else 'warning' if item.utilization > 50 else 'success' }}" 
+                                         role="progressbar" 
+                                         style="width: {{ item.utilization }}%">
+                                        {{ item.utilization }}%
+                                    </div>
+                                </div>
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {% else %}
+        <p class="text-muted text-center mb-0">Нет данных</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}

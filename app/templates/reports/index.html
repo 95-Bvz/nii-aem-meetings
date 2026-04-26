@@ -1,0 +1,86 @@
+{% extends "base.html" %}
+
+{% block title %}Отчёты - НИИ АЭМ{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-bar-chart"></i> Отчёты и статистика</h1>
+</div>
+
+<div class="row">
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-calendar3 text-primary" style="font-size: 3rem;"></i>
+                <h5 class="card-title mt-3">Отчёт по совещаниям</h5>
+                <p class="card-text text-muted">
+                    Статистика проведённых совещаний за выбранный период
+                </p>
+                <a href="{{ url_for('reports.meetings_report') }}" class="btn btn-primary">
+                    <i class="bi bi-arrow-right"></i> Открыть
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-door-open text-success" style="font-size: 3rem;"></i>
+                <h5 class="card-title mt-3">Загрузка переговорных</h5>
+                <p class="card-text text-muted">
+                    Анализ использования переговорных комнат
+                </p>
+                <a href="{{ url_for('reports.rooms_report') }}" class="btn btn-success">
+                    <i class="bi bi-arrow-right"></i> Открыть
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-people text-info" style="font-size: 3rem;"></i>
+                <h5 class="card-title mt-3">Активность сотрудников</h5>
+                <p class="card-text text-muted">
+                    Участие сотрудников в совещаниях
+                </p>
+                <a href="{{ url_for('reports.employees_report') }}" class="btn btn-info">
+                    <i class="bi bi-arrow-right"></i> Открыть
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-list-task text-warning" style="font-size: 3rem;"></i>
+                <h5 class="card-title mt-3">Отчёт по задачам</h5>
+                <p class="card-text text-muted">
+                    Статус выполнения задач и поручений
+                </p>
+                <a href="{{ url_for('reports.tasks_report') }}" class="btn btn-warning">
+                    <i class="bi bi-arrow-right"></i> Открыть
+                </a>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-md-6 col-lg-4 mb-4">
+        <div class="card h-100">
+            <div class="card-body text-center">
+                <i class="bi bi-graph-up text-danger" style="font-size: 3rem;"></i>
+                <h5 class="card-title mt-3">Общая статистика</h5>
+                <p class="card-text text-muted">
+                    Сводная статистика системы
+                </p>
+                <a href="{{ url_for('reports.statistics') }}" class="btn btn-danger">
+                    <i class="bi bi-arrow-right"></i> Открыть
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+
+{% block title %}Новая переговорная - НИИ АЭМ{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-plus-circle"></i> Новая переговорная комната</h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Название комнаты *</label>
+                        <input type="text" class="form-control" id="name" name="name" required
+                               placeholder="Например: Конференц-зал №1">
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="building" class="form-label">Здание</label>
+                            <input type="text" class="form-control" id="building" name="building"
+                                   placeholder="Корпус А">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="floor" class="form-label">Этаж</label>
+                            <input type="number" class="form-control" id="floor" name="floor" min="1">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="room_number" class="form-label">Номер кабинета</label>
+                            <input type="text" class="form-control" id="room_number" name="room_number"
+                                   placeholder="305">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="capacity" class="form-label">Вместимость (человек)</label>
+                        <input type="number" class="form-control" id="capacity" name="capacity" 
+                               min="1" max="500" value="10">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Оборудование</label>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="has_projector" name="has_projector">
+                                    <label class="form-check-label" for="has_projector">
+                                        <i class="bi bi-projector"></i> Проектор
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="has_video_conf" name="has_video_conf">
+                                    <label class="form-check-label" for="has_video_conf">
+                                        <i class="bi bi-camera-video"></i> Видеоконференцсвязь
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="has_whiteboard" name="has_whiteboard" checked>
+                                    <label class="form-check-label" for="has_whiteboard">
+                                        <i class="bi bi-easel"></i> Маркерная доска
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Описание</label>
+                        <textarea class="form-control" id="description" name="description" rows="2"
+                                  placeholder="Дополнительная информация о комнате..."></textarea>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg"></i> Создать комнату
+                        </button>
+                        <a href="{{ url_for('rooms.index') }}" class="btn btn-secondary">Отмена</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

@@ -1,0 +1,56 @@
+{% extends "base.html" %}
+
+{% block title %}Редактирование подразделения - НИИ АЭМ{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-pencil"></i> Редактирование подразделения</h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-6">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <div class="mb-3">
+                        <label for="code" class="form-label">Код подразделения *</label>
+                        <input type="text" class="form-control" id="code" name="code" 
+                               value="{{ department.code }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Название *</label>
+                        <input type="text" class="form-control" id="name" name="name" 
+                               value="{{ department.name }}" required>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="head_id" class="form-label">Руководитель</label>
+                        <select class="form-select" id="head_id" name="head_id">
+                            <option value="">-- Не указан --</option>
+                            {% for emp in employees %}
+                            <option value="{{ emp.id }}" {{ 'selected' if department.head_id == emp.id }}>
+                                {{ emp.full_name }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Описание</label>
+                        <textarea class="form-control" id="description" name="description" rows="3">{{ department.description or '' }}</textarea>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg"></i> Сохранить
+                        </button>
+                        <a href="{{ url_for('employees.departments') }}" class="btn btn-secondary">Отмена</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
