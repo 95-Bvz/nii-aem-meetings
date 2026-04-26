@@ -14,12 +14,12 @@
 <div class="card mb-4">
     <div class="card-body">
         <form method="GET" class="row g-3">
-            <div class="col-md-4">
+            <div class="col-12 col-md-4">
                 <label class="form-label">Поиск</label>
                 <input type="text" class="form-control" name="search" 
                        value="{{ request.args.get('search', '') }}" placeholder="ФИО или должность...">
             </div>
-            <div class="col-md-4">
+            <div class="col-12 col-md-4">
                 <label class="form-label">Подразделение</label>
                 <select class="form-select" name="department_id">
                     <option value="">Все подразделения</option>
@@ -30,8 +30,8 @@
                     {% endfor %}
                 </select>
             </div>
-            <div class="col-md-4 d-flex align-items-end">
-                <button type="submit" class="btn btn-primary me-2">
+            <div class="col-12 col-md-4 d-flex align-items-end gap-2">
+                <button type="submit" class="btn btn-primary flex-grow-1 flex-md-grow-0">
                     <i class="bi bi-search"></i> Найти
                 </button>
                 <a href="{{ url_for('employees.index') }}" class="btn btn-outline-secondary">Сбросить</a>
