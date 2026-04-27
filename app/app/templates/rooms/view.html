@@ -1,0 +1,155 @@
+{% extends "base.html" %}
+
+{% block title %}{{ room.name }} - НИИ АЭМ{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <div>
+        <nav aria-label="breadcrumb">
+            <ol class="breadcrumb mb-1">
+                <li class="breadcrumb-item"><a href="{{ url_for('rooms.index') }}">Переговорные</a></li>
+                <li class="breadcrumb-item active">{{ room.name }}</li>
+            </ol>
+        </nav>
+        <h1>{{ room.name }}</h1>
+    </div>
+    <a href="{{ url_for('rooms.edit', id=room.id) }}" class="btn btn-outline-primary">
+        <i class="bi bi-pencil"></i> Редактировать
+    </a>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card mb-4">
+            <div class="card-header">
+                <i class="bi bi-info-circle"></i> Информация о комнате
+            </div>
+            <div class="card-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="50%">Расположение:</th>
+                                <td>{{ room.location }}</td>
+                            </tr>
+                            <tr>
+                                <th>Вместимость:</th>
+                                <td>{{ room.capacity }} человек</td>
+                            </tr>
+                            <tr>
+                                <th>Статус:</th>
+                                <td>
+                                    {% if room.is_active %}
+                                    <span class="badge bg-success">Активна</span>
+                                    {% else %}
+                                    <span class="badge bg-secondary">Неактивна</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                        </table>
+                    </div>
+                    <div class="col-md-6">
+                        <h6>Оборудование:</h6>
+                        <ul class="list-unstyled">
+                            <li>
+                                <i class="bi bi-{{ 'check-circle text-success' if room.has_projector else 'x-circle text-muted' }}"></i>
+                                Проектор
+                            </li>
+                            <li>
+                                <i class="bi bi-{{ 'check-circle text-success' if room.has_video_conf else 'x-circle text-muted' }}"></i>
+                                Видеоконференцсвязь
+                            </li>
+                            <li>
+                                <i class="bi bi-{{ 'check-circle text-success' if room.has_whiteboard else 'x-circle text-muted' }}"></i>
+                                Маркерная доска
+                            </li>
+                        </ul>
+                    </div>
+                </div>
+                {% if room.description %}
+                <hr>
+                <p class="mb-0">{{ room.description }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- Ближайшие совещания -->
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-calendar3"></i> Ближайшие совещания</span>
+                <a href="{{ url_for('rooms.schedule', id=room.id) }}" class="btn btn-sm btn-outline-primary">
+                    Расписание
+                </a>
+            </div>
+            <div class="card-body">
+                {% if upcoming_meetings %}
+                <ul class="list-group list-group-flush">
+                    {% for meeting in upcoming_meetings %}
+                    <li class="list-group-item px-0">
+                        <div class="d-flex justify-content-between align-items-center">
+                            <div>
+                                <a href="{{ url_for('meetings.view', id=meeting.id) }}" class="text-decoration-none">
+                                    {{ meeting.title }}
+                                </a>
+                                <br>
+                                <small class="text-muted">
+                                    {{ meeting.date.strftime('%d.%m.%Y') }} | 
+                                    {{ meeting.start_time.strftime('%H:%M') }} - {{ meeting.end_time.strftime('%H:%M') }}
+                                </small>
+                            </div>
+                            <span class="badge bg-primary">{{ meeting.status_display }}</span>
+                        </div>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% else %}
+                <p class="text-muted text-center mb-0">Нет запланированных совещаний</p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-gear"></i> Действия
+            </div>
+            <div class="card-body d-grid gap-2">
+                <a href="{{ url_for('rooms.schedule', id=room.id) }}" class="btn btn-outline-primary">
+                    <i class="bi bi-calendar3"></i> Расписание
+                </a>
+                <a href="{{ url_for('rooms.edit', id=room.id) }}" class="btn btn-outline-secondary">
+                    <i class="bi bi-pencil"></i> Редактировать
+                </a>
+                <a href="{{ url_for('meetings.create') }}?room_id={{ room.id }}" class="btn btn-outline-success">
+                    <i class="bi bi-plus"></i> Забронировать
+                </a>
+                <hr>
+                {% if room.is_active %}
+                <form action="{{ url_for('rooms.delete', id=room.id) }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="btn btn-outline-danger w-100" 
+                            onclick="return confirm('Деактивировать комнату?')">
+                        <i class="bi bi-x-circle"></i> Деактивировать
+                    </button>
+                </form>
+                {% else %}
+                <form action="{{ url_for('rooms.activate', id=room.id) }}" method="POST" class="mb-2">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="btn btn-outline-success w-100">
+                        <i class="bi bi-check-circle"></i> Активировать
+                    </button>
+                </form>
+                <form action="{{ url_for('rooms.permanent_delete', id=room.id) }}" method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <button type="submit" class="btn btn-danger w-100" 
+                            onclick="return confirm('Удалить комнату навсегда? Это действие необратимо!')">
+                        <i class="bi bi-trash"></i> Удалить навсегда
+                    </button>
+                </form>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

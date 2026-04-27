@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+
+{% block title %}Главная - НИИ АЭМ{% endblock %}
+
+{% block content %}
+<div class="page-header d-flex justify-content-between align-items-center">
+    <h1><i class="bi bi-speedometer2"></i> Панель управления</h1>
+    <a href="{{ url_for('meetings.create') }}" class="btn btn-primary">
+        <i class="bi bi-plus-lg"></i> Новое совещание
+    </a>
+</div>
+
+<!-- Статистика -->
+<div class="row mb-4">
+    <div class="col-md-2 mb-3">
+        <div class="card stat-card">
+            <div class="stat-icon text-primary"><i class="bi bi-calendar-check"></i></div>
+            <div class="stat-value">{{ stats.today_meetings }}</div>
+            <div class="stat-label">Сегодня</div>
+        </div>
+    </div>
+    <div class="col-md-2 mb-3">
+        <div class="card stat-card">
+            <div class="stat-icon text-info"><i class="bi bi-calendar-week"></i></div>
+            <div class="stat-value">{{ stats.week_meetings }}</div>
+            <div class="stat-label">На неделе</div>
+        </div>
+    </div>
+    <div class="col-md-2 mb-3">
+        <div class="card stat-card">
+            <div class="stat-icon text-success"><i class="bi bi-calendar3"></i></div>
+            <div class="stat-value">{{ stats.total_meetings }}</div>
+            <div class="stat-label">Всего совещаний</div>
+        </div>
+    </div>
+    <div class="col-md-2 mb-3">
+        <div class="card stat-card">
+            <div class="stat-icon text-warning"><i class="bi bi-person-badge"></i></div>
+            <div class="stat-value">{{ stats.total_employees }}</div>
+            <div class="stat-label">Сотрудников</div>
+        </div>
+    </div>
+    <div class="col-md-2 mb-3">
+        <div class="card stat-card">
+            <div class="stat-icon text-secondary"><i class="bi bi-door-open"></i></div>
+            <div class="stat-value">{{ stats.total_rooms }}</div>
+            <div class="stat-label">Переговорных</div>
+        </div>
+    </div>
+    <div class="col-md-2 mb-3">
+        <div class="card stat-card">
+            <div class="stat-icon text-danger"><i class="bi bi-exclamation-triangle"></i></div>
+            <div class="stat-value">{{ stats.pending_tasks }}</div>
+            <div class="stat-label">Ожидающих задач</div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Сегодняшние совещания -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-calendar-day"></i> Совещания сегодня</span>
+                <span class="badge bg-primary">{{ today_meetings|length }}</span>
+            </div>
+            <div class="card-body">
+                {% if today_meetings %}
+                    {% for meeting in today_meetings %}
+                    <div class="card meeting-card mb-2 {{ meeting.status }}">
+                        <div class="card-body py-2">
+                            <div class="d-flex justify-content-between align-items-start">
+                                <div>
+                                    <h6 class="mb-1">
+                                        <a href="{{ url_for('meetings.view', id=meeting.id) }}" class="text-decoration-none">
+                                            {{ meeting.title }}
+                                        </a>
+                                    </h6>
+                                    <small class="text-muted">
+                                        <i class="bi bi-clock"></i> {{ meeting.start_time.strftime('%H:%M') }} - {{ meeting.end_time.strftime('%H:%M') }}
+                                        {% if meeting.room %}
+                                        | <i class="bi bi-geo-alt"></i> {{ meeting.room.name }}
+                                        {% endif %}
+                                    </small>
+                                </div>
+                                <span class="badge bg-{{ 'success' if meeting.status == 'completed' else 'warning' if meeting.status == 'ongoing' else 'secondary' if meeting.status == 'cancelled' else 'primary' }}">
+                                    {{ meeting.status_display }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted text-center mb-0">
+                        <i class="bi bi-calendar-x"></i> На сегодня совещаний нет
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Ближайшие совещания -->
+    <div class="col-lg-6 mb-4">
+        <div class="card">
+            <div class="card-header d-flex justify-content-between align-items-center">
+                <span><i class="bi bi-calendar-range"></i> Ближайшие совещания</span>
+                <a href="{{ url_for('meetings.index') }}" class="btn btn-sm btn-outline-primary">Все</a>
+            </div>
+            <div class="card-body">
+                {% if upcoming_meetings %}
+                    {% for meeting in upcoming_meetings %}
+                    <div class="d-flex align-items-center mb-3 pb-2 border-bottom">
+                        <div class="bg-light rounded p-2 me-3 text-center" style="min-width: 60px;">
+                            <div class="fw-bold text-primary">{{ meeting.date.strftime('%d') }}</div>
+                            <small class="text-muted">{{ meeting.date.strftime('%b') }}</small>
+                        </div>
+                        <div class="flex-grow-1">
+                            <a href="{{ url_for('meetings.view', id=meeting.id) }}" class="text-decoration-none fw-semibold">
+                                {{ meeting.title }}
+                            </a>
+                            <div class="small text-muted">
+                                {{ meeting.start_time.strftime('%H:%M') }} - {{ meeting.end_time.strftime('%H:%M') }}
+                                {% if meeting.organizer %}
+                                | {{ meeting.organizer.short_name }}
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <p class="text-muted text-center mb-0">
+                        <i class="bi bi-calendar-check"></i> Нет запланированных совещаний
+                    </p>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Просроченные задачи -->
+{% if overdue_tasks %}
+<div class="row">
+    <div class="col-12">
+        <div class="card border-danger">
+            <div class="card-header bg-danger text-white">
+                <i class="bi bi-exclamation-circle"></i> Просроченные задачи
+            </div>
+            <div class="card-body">
+                <div class="table-responsive">
+                    <table class="table table-hover mb-0">
+                        <thead>
+                            <tr>
+                                <th>Задача</th>
+                                <th>Ответственный</th>
+                                <th>Срок</th>
+                                <th>Совещание</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for task in overdue_tasks %}
+                            <tr>
+                                <td>{{ task.description[:100] }}{% if task.description|length > 100 %}...{% endif %}</td>
+                                <td>{{ task.responsible.short_name if task.responsible else '-' }}</td>
+                                <td><span class="text-danger">{{ task.deadline.strftime('%d.%m.%Y') if task.deadline else '-' }}</span></td>
+                                <td>
+                                    <a href="{{ url_for('meetings.view', id=task.protocol.meeting_id) }}">
+                                        {{ task.protocol.meeting.title[:30] }}...
+                                    </a>
+                                </td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

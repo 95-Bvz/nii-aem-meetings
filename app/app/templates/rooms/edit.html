@@ -1,0 +1,104 @@
+{% extends "base.html" %}
+
+{% block title %}Редактирование комнаты - НИИ АЭМ{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1">
+            <li class="breadcrumb-item"><a href="{{ url_for('rooms.index') }}">Переговорные</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('rooms.view', id=room.id) }}">{{ room.name }}</a></li>
+            <li class="breadcrumb-item active">Редактирование</li>
+        </ol>
+    </nav>
+    <h1><i class="bi bi-pencil"></i> Редактирование комнаты</h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <div class="mb-3">
+                        <label for="name" class="form-label">Название комнаты *</label>
+                        <input type="text" class="form-control" id="name" name="name" 
+                               value="{{ room.name }}" required>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="building" class="form-label">Здание</label>
+                            <input type="text" class="form-control" id="building" name="building"
+                                   value="{{ room.building or '' }}">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="floor" class="form-label">Этаж</label>
+                            <input type="number" class="form-control" id="floor" name="floor" 
+                                   value="{{ room.floor or '' }}" min="1">
+                        </div>
+                        <div class="col-md-4">
+                            <label for="room_number" class="form-label">Номер кабинета</label>
+                            <input type="text" class="form-control" id="room_number" name="room_number"
+                                   value="{{ room.room_number or '' }}">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="capacity" class="form-label">Вместимость (человек)</label>
+                        <input type="number" class="form-control" id="capacity" name="capacity" 
+                               value="{{ room.capacity }}" min="1" max="500">
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label class="form-label">Оборудование</label>
+                        <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="has_projector" 
+                                           name="has_projector" {{ 'checked' if room.has_projector }}>
+                                    <label class="form-check-label" for="has_projector">Проектор</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="has_video_conf" 
+                                           name="has_video_conf" {{ 'checked' if room.has_video_conf }}>
+                                    <label class="form-check-label" for="has_video_conf">ВКС</label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input class="form-check-input" type="checkbox" id="has_whiteboard" 
+                                           name="has_whiteboard" {{ 'checked' if room.has_whiteboard }}>
+                                    <label class="form-check-label" for="has_whiteboard">Доска</label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <div class="form-check">
+                            <input class="form-check-input" type="checkbox" id="is_active" 
+                                   name="is_active" {{ 'checked' if room.is_active }}>
+                            <label class="form-check-label" for="is_active">Комната активна</label>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Описание</label>
+                        <textarea class="form-control" id="description" name="description" rows="2">{{ room.description or '' }}</textarea>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg"></i> Сохранить
+                        </button>
+                        <a href="{{ url_for('rooms.view', id=room.id) }}" class="btn btn-secondary">Отмена</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

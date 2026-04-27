@@ -1,0 +1,90 @@
+{% extends "base.html" %}
+
+{% block title %}Редактирование сотрудника - НИИ АЭМ{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb mb-1">
+            <li class="breadcrumb-item"><a href="{{ url_for('employees.index') }}">Сотрудники</a></li>
+            <li class="breadcrumb-item"><a href="{{ url_for('employees.view', id=employee.id) }}">{{ employee.short_name }}</a></li>
+            <li class="breadcrumb-item active">Редактирование</li>
+        </ol>
+    </nav>
+    <h1><i class="bi bi-pencil"></i> Редактирование сотрудника</h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="last_name" class="form-label">Фамилия *</label>
+                            <input type="text" class="form-control" id="last_name" name="last_name" 
+                                   value="{{ employee.last_name }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="first_name" class="form-label">Имя *</label>
+                            <input type="text" class="form-control" id="first_name" name="first_name" 
+                                   value="{{ employee.first_name }}" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="middle_name" class="form-label">Отчество</label>
+                            <input type="text" class="form-control" id="middle_name" name="middle_name" 
+                                   value="{{ employee.middle_name or '' }}">
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="position" class="form-label">Должность *</label>
+                            <input type="text" class="form-control" id="position" name="position" 
+                                   value="{{ employee.position }}" required>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="department_id" class="form-label">Подразделение</label>
+                            <select class="form-select" id="department_id" name="department_id">
+                                <option value="">-- Не указано --</option>
+                                {% for dept in departments %}
+                                <option value="{{ dept.id }}" {{ 'selected' if employee.department_id == dept.id }}>
+                                    {{ dept.name }}
+                                </option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="email" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="email" name="email" 
+                                   value="{{ employee.email or '' }}">
+                        </div>
+                        <div class="col-md-6">
+                            <label for="phone" class="form-label">Телефон</label>
+                            <input type="text" class="form-control" id="phone" name="phone" 
+                                   value="{{ employee.phone or '' }}">
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="office" class="form-label">Кабинет</label>
+                        <input type="text" class="form-control" id="office" name="office" 
+                               value="{{ employee.office or '' }}">
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg"></i> Сохранить
+                        </button>
+                        <a href="{{ url_for('employees.view', id=employee.id) }}" class="btn btn-secondary">Отмена</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

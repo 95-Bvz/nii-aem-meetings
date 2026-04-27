@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}НИИ АЭМ - Система планирования совещаний{% endblock %}</title>
+    
+    <!-- Bootstrap 5 CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" rel="stylesheet">
+    <!-- FullCalendar -->
+    <link href="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.css" rel="stylesheet">
+    
+    <style>
+        :root {
+            --primary-color: #1a5f7a;
+            --secondary-color: #159895;
+            --accent-color: #57c5b6;
+            --light-color: #f8f9fa;
+            --dark-color: #212529;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f0f2f5;
+            min-height: 100vh;
+        }
+        
+        .navbar {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        
+        .navbar-brand {
+            font-weight: 700;
+            letter-spacing: 0.5px;
+        }
+        
+        .sidebar {
+            background: white;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.05);
+            min-height: calc(100vh - 56px);
+            position: fixed;
+            top: 56px;
+            left: 0;
+            width: 250px;
+            z-index: 100;
+            padding-top: 1rem;
+        }
+        
+        .sidebar .nav-link {
+            color: #495057;
+            padding: 0.75rem 1.25rem;
+            border-radius: 0;
+            transition: all 0.2s;
+        }
+        
+        .sidebar .nav-link:hover {
+            background-color: rgba(26, 95, 122, 0.1);
+            color: var(--primary-color);
+        }
+        
+        .sidebar .nav-link.active {
+            background-color: var(--primary-color);
+            color: white;
+        }
+        
+        .sidebar .nav-link i {
+            width: 24px;
+            margin-right: 8px;
+        }
+        
+        .main-content {
+            margin-left: 250px;
+            padding: 1.5rem;
+            min-height: calc(100vh - 56px);
+        }
+        
+        .card {
+            border: none;
+            border-radius: 12px;
+            box-shadow: 0 2px 12px rgba(0,0,0,0.08);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.12);
+        }
+        
+        .card-header {
+            background: transparent;
+            border-bottom: 1px solid #eee;
+            font-weight: 600;
+        }
+        
+        .stat-card {
+            text-align: center;
+            padding: 1.5rem;
+        }
+        
+        .stat-card .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .stat-card .stat-value {
+            font-size: 2rem;
+            font-weight: 700;
+            color: var(--primary-color);
+        }
+        
+        .stat-card .stat-label {
+            color: #6c757d;
+            font-size: 0.9rem;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color), var(--secondary-color));
+            border: none;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #145067, #128a86);
+        }
+        
+        .table th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            border-top: none;
+        }
+        
+        .badge-status {
+            padding: 0.5em 1em;
+            border-radius: 20px;
+            font-weight: 500;
+        }
+        
+        .meeting-card {
+            border-left: 4px solid var(--primary-color);
+        }
+        
+        .meeting-card.cancelled {
+            border-left-color: #dc3545;
+            opacity: 0.7;
+        }
+        
+        .meeting-card.completed {
+            border-left-color: #28a745;
+        }
+        
+        .page-header {
+            margin-bottom: 1.5rem;
+            padding-bottom: 1rem;
+            border-bottom: 1px solid #dee2e6;
+        }
+        
+        .page-header h1 {
+            font-size: 1.75rem;
+            font-weight: 600;
+            color: var(--dark-color);
+        }
+        
+        .form-control:focus, .form-select:focus {
+            border-color: var(--secondary-color);
+            box-shadow: 0 0 0 0.2rem rgba(21, 152, 149, 0.25);
+        }
+        
+        .alert {
+            border-radius: 10px;
+            border: none;
+        }
+        
+        @media (max-width: 768px) {
+            .sidebar {
+                width: 100%;
+                position: relative;
+                min-height: auto;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    <!-- Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="{{ url_for('main.index') }}">
+                <i class="bi bi-building"></i> НИИ АЭМ
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    {% if current_user.is_authenticated %}
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" 
+                           data-bs-toggle="dropdown" aria-expanded="false">
+                            <i class="bi bi-person-circle"></i> {{ current_user.username }}
+                        </a>
+                        <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                            <li><a class="dropdown-item" href="{{ url_for('auth.profile') }}">
+                                <i class="bi bi-person"></i> Профиль
+                            </a></li>
+                            <li><hr class="dropdown-divider"></li>
+                            <li><a class="dropdown-item" href="{{ url_for('auth.logout') }}">
+                                <i class="bi bi-box-arrow-right"></i> Выход
+                            </a></li>
+                        </ul>
+                    </li>
+                    {% endif %}
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="d-flex">
+        {% if current_user.is_authenticated %}
+        <!-- Sidebar -->
+        <nav class="sidebar d-none d-md-block">
+            <ul class="nav flex-column">
+                <li class="nav-item">
+                    <a class="nav-link {{ 'active' if request.endpoint == 'main.index' }}" 
+                       href="{{ url_for('main.index') }}">
+                        <i class="bi bi-house-door"></i> Главная
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ 'active' if request.endpoint == 'main.calendar' }}" 
+                       href="{{ url_for('main.calendar') }}">
+                        <i class="bi bi-calendar3"></i> Календарь
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ 'active' if 'meetings' in request.endpoint }}" 
+                       href="{{ url_for('meetings.index') }}">
+                        <i class="bi bi-people"></i> Совещания
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ 'active' if 'employees' in request.endpoint }}" 
+                       href="{{ url_for('employees.index') }}">
+                        <i class="bi bi-person-badge"></i> Сотрудники
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ 'active' if 'rooms' in request.endpoint }}" 
+                       href="{{ url_for('rooms.index') }}">
+                        <i class="bi bi-door-open"></i> Переговорные
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link {{ 'active' if 'reports' in request.endpoint }}" 
+                       href="{{ url_for('reports.index') }}">
+                        <i class="bi bi-bar-chart"></i> Отчёты
+                    </a>
+                </li>
+                <hr class="mx-3">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('meetings.types') }}">
+                        <i class="bi bi-tags"></i> Типы совещаний
+                    </a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('employees.departments') }}">
+                        <i class="bi bi-diagram-3"></i> Подразделения
+                    </a>
+                </li>
+            </ul>
+        </nav>
+        {% endif %}
+
+        <!-- Main Content -->
+        <main class="main-content flex-grow-1">
+            <!-- Flash Messages -->
+            {% with messages = get_flashed_messages(with_categories=true) %}
+                {% if messages %}
+                    {% for category, message in messages %}
+                    <div class="alert alert-{{ category }} alert-dismissible fade show" role="alert">
+                        {{ message }}
+                        <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                    </div>
+                    {% endfor %}
+                {% endif %}
+            {% endwith %}
+
+            {% block content %}{% endblock %}
+        </main>
+    </div>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+    <!-- FullCalendar -->
+    <script src="https://cdn.jsdelivr.net/npm/fullcalendar@6.1.10/index.global.min.js"></script>
+    
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

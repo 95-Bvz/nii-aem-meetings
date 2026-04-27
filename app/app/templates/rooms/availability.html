@@ -1,0 +1,100 @@
+{% extends "base.html" %}
+
+{% block title %}Доступность комнат - НИИ АЭМ{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-calendar-check"></i> Проверка доступности комнат</h1>
+</div>
+
+<div class="card mb-4">
+    <div class="card-body">
+        <form method="GET" class="row g-3">
+            <div class="col-md-3">
+                <label class="form-label">Дата</label>
+                <input type="date" class="form-control" name="date" 
+                       value="{{ request.args.get('date', '') }}" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Время начала</label>
+                <input type="time" class="form-control" name="start_time" 
+                       value="{{ request.args.get('start_time', '') }}" required>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label">Время окончания</label>
+                <input type="time" class="form-control" name="end_time" 
+                       value="{{ request.args.get('end_time', '') }}" required>
+            </div>
+            <div class="col-md-3 d-flex align-items-end">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="bi bi-search"></i> Проверить
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if results %}
+<div class="card">
+    <div class="card-header">
+        <i class="bi bi-list"></i> Результаты проверки на {{ check_date.strftime('%d.%m.%Y') }}, 
+        {{ start_time.strftime('%H:%M') }} - {{ end_time.strftime('%H:%M') }}
+    </div>
+    <div class="card-body">
+        <div class="table-responsive">
+            <table class="table table-hover">
+                <thead>
+                    <tr>
+                        <th>Комната</th>
+                        <th>Расположение</th>
+                        <th>Вместимость</th>
+                        <th>Оборудование</th>
+                        <th>Статус</th>
+                        <th></th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for item in results %}
+                    <tr class="{{ 'table-success' if item.available else 'table-danger' }}">
+                        <td class="fw-semibold">{{ item.room.name }}</td>
+                        <td>{{ item.room.location }}</td>
+                        <td>{{ item.room.capacity }} чел.</td>
+                        <td>
+                            {% if item.room.has_projector %}<i class="bi bi-projector" title="Проектор"></i>{% endif %}
+                            {% if item.room.has_video_conf %}<i class="bi bi-camera-video" title="ВКС"></i>{% endif %}
+                            {% if item.room.has_whiteboard %}<i class="bi bi-easel" title="Доска"></i>{% endif %}
+                        </td>
+                        <td>
+                            {% if item.available %}
+                            <span class="badge bg-success"><i class="bi bi-check"></i> Свободна</span>
+                            {% else %}
+                            <span class="badge bg-danger"><i class="bi bi-x"></i> Занята</span>
+                            {% if item.conflict %}
+                            <br><small class="text-muted">{{ item.conflict.title[:30] }}...</small>
+                            {% endif %}
+                            {% endif %}
+                        </td>
+                        <td>
+                            {% if item.available %}
+                            <a href="{{ url_for('meetings.create') }}?room_id={{ item.room.id }}&date={{ check_date }}&start_time={{ start_time }}&end_time={{ end_time }}" 
+                               class="btn btn-sm btn-success">
+                                <i class="bi bi-plus"></i> Забронировать
+                            </a>
+                            {% endif %}
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% else %}
+<div class="card">
+    <div class="card-body text-center py-5">
+        <i class="bi bi-calendar2-week" style="font-size: 4rem; color: #dee2e6;"></i>
+        <p class="text-muted mt-3">Выберите дату и время для проверки доступности комнат</p>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

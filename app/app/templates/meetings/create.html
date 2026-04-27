@@ -1,0 +1,118 @@
+{% extends "base.html" %}
+
+{% block title %}Новое совещание - НИИ АЭМ{% endblock %}
+
+{% block content %}
+<div class="page-header">
+    <h1><i class="bi bi-plus-circle"></i> Новое совещание</h1>
+</div>
+
+<div class="row">
+    <div class="col-lg-8">
+        <div class="card">
+            <div class="card-body">
+                <form method="POST">
+                    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}"/>
+                    <div class="mb-3">
+                        <label for="title" class="form-label">Название совещания *</label>
+                        <input type="text" class="form-control" id="title" name="title" required>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-4">
+                            <label for="date" class="form-label">Дата *</label>
+                            <input type="date" class="form-control" id="date" name="date" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="start_time" class="form-label">Начало *</label>
+                            <input type="time" class="form-control" id="start_time" name="start_time" required>
+                        </div>
+                        <div class="col-md-4">
+                            <label for="end_time" class="form-label">Окончание *</label>
+                            <input type="time" class="form-control" id="end_time" name="end_time" required>
+                        </div>
+                    </div>
+                    
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="type_id" class="form-label">Тип совещания</label>
+                            <select class="form-select" id="type_id" name="type_id">
+                                <option value="">-- Не выбран --</option>
+                                {% for type in types %}
+                                <option value="{{ type.id }}">{{ type.name }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="col-md-6">
+                            <label for="room_id" class="form-label">Переговорная</label>
+                            <select class="form-select" id="room_id" name="room_id">
+                                <option value="">-- Не выбрана --</option>
+                                {% for room in rooms %}
+                                <option value="{{ room.id }}">{{ room.name }} (до {{ room.capacity }} чел.)</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="organizer_id" class="form-label">Организатор *</label>
+                        <select class="form-select" id="organizer_id" name="organizer_id" required>
+                            <option value="">-- Выберите организатора --</option>
+                            {% for emp in employees %}
+                            <option value="{{ emp.id }}">{{ emp.full_name }} - {{ emp.position }}</option>
+                            {% endfor %}
+                        </select>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="participants" class="form-label">Участники</label>
+                        <select class="form-select" id="participants" name="participants" multiple size="6">
+                            {% for emp in employees %}
+                            <option value="{{ emp.id }}">{{ emp.full_name }} - {{ emp.position }}</option>
+                            {% endfor %}
+                        </select>
+                        <div class="form-text">Удерживайте Ctrl для выбора нескольких участников</div>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="description" class="form-label">Описание</label>
+                        <textarea class="form-control" id="description" name="description" rows="3"></textarea>
+                    </div>
+                    
+                    <div class="mb-3">
+                        <label for="agenda" class="form-label">Повестка дня</label>
+                        <textarea class="form-control" id="agenda" name="agenda" rows="4" 
+                                  placeholder="1. Первый вопрос&#10;2. Второй вопрос&#10;3. Разное"></textarea>
+                    </div>
+                    
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-primary">
+                            <i class="bi bi-check-lg"></i> Создать совещание
+                        </button>
+                        <a href="{{ url_for('meetings.index') }}" class="btn btn-secondary">Отмена</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+    
+    <div class="col-lg-4">
+        <div class="card">
+            <div class="card-header">
+                <i class="bi bi-info-circle"></i> Подсказка
+            </div>
+            <div class="card-body">
+                <p class="small text-muted">
+                    <strong>Организатор</strong> - сотрудник, ответственный за проведение совещания.
+                </p>
+                <p class="small text-muted">
+                    <strong>Участники</strong> - сотрудники, приглашённые на совещание.
+                </p>
+                <p class="small text-muted mb-0">
+                    <strong>Повестка дня</strong> - список вопросов для обсуждения на совещании.
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
