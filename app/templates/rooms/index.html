@@ -9,9 +9,11 @@
         <a href="{{ url_for('rooms.availability') }}" class="btn btn-outline-primary">
             <i class="bi bi-calendar-check"></i> Проверить доступность
         </a>
+        {% if current_user.is_manager() %}
         <a href="{{ url_for('rooms.create') }}" class="btn btn-primary">
             <i class="bi bi-plus-lg"></i> Добавить комнату
         </a>
+        {% endif %}
     </div>
 </div>
 
@@ -67,9 +69,11 @@
             <div class="card-body text-center py-5">
                 <i class="bi bi-door-closed" style="font-size: 4rem; color: #dee2e6;"></i>
                 <p class="text-muted mt-3">Переговорные комнаты не добавлены</p>
+                {% if current_user.is_manager() %}
                 <a href="{{ url_for('rooms.create') }}" class="btn btn-primary">
                     <i class="bi bi-plus-lg"></i> Добавить первую комнату
                 </a>
+                {% endif %}
             </div>
         </div>
     </div>
