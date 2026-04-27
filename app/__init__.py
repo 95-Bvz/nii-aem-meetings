@@ -48,7 +48,14 @@ def create_app(config_class=Config):
                 <i class="bi bi-shield-x" style="font-size: 4rem; color: #dc3545;"></i>
                 <h2 class="mt-3">Доступ запрещён</h2>
                 <p class="text-muted">У вас недостаточно прав для выполнения этого действия.</p>
-                <a href="{{ url_for('main.index') }}" class="btn btn-primary">На главную</a>
+                <div class="d-flex justify-content-center gap-2">
+                    <a href="javascript:history.back()" class="btn btn-outline-secondary">
+                        <i class="bi bi-arrow-left"></i> Назад
+                    </a>
+                    <a href="{{ url_for('main.index') }}" class="btn btn-primary">
+                        <i class="bi bi-house-door"></i> На главную
+                    </a>
+                </div>
             </div>
             {% endblock %}
         '''), 403
