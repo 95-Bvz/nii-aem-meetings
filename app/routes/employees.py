@@ -24,38 +24,6 @@ def index():
     
     query = Employee.query.filter_by(is_active=True)
     
-    # Фильтрация для обычного пользователя — только коллеги по совещаниям
-    if not current_user.is_manager() and current_user.employee_id:
-        from app.models import meeting_participants, Meeting
-        # Находим ID всех совещаний пользователя
-        my_meeting_ids = db.session.query(Meeting.id).outerjoin(
-            meeting_participants, Meeting.id == meeting_participants.c.meeting_id
-        ).filter(
-            db.or_(
-                meeting_participants.c.employee_id == current_user.employee_id,
-                Meeting.organizer_id == current_user.employee_id
-            )
-        ).distinct().subquery()
-        
-        # Находим ID всех сотрудников из этих совещаний
-        colleague_ids = db.session.query(meeting_participants.c.employee_id).filter(
-            meeting_participants.c.meeting_id.in_(db.session.query(my_meeting_ids))
-        ).distinct()
-        
-        organizer_ids = db.session.query(Meeting.organizer_id).filter(
-            Meeting.id.in_(db.session.query(my_meeting_ids))
-        ).distinct()
-        
-        query = query.filter(
-            db.or_(
-                Employee.id.in_(colleague_ids),
-                Employee.id.in_(organizer_ids),
-                Employee.id == current_user.employee_id
-            )
-        )
-    elif not current_user.is_manager() and not current_user.employee_id:
-        query = query.filter(Employee.id == -1)
-    
     if department_id:
         query = query.filter(Employee.department_id == department_id)
     
