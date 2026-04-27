@@ -1,5 +1,5 @@
 import logging
-from flask import Blueprint, render_template, redirect, url_for, flash, request
+from flask import Blueprint, render_template, redirect, url_for, flash, request, abort
 from flask_login import login_user, logout_user, login_required, current_user
 from urllib.parse import urlparse
 from app import db
@@ -30,6 +30,11 @@ def login():
         if user is None or not user.check_password(password):
             logger.warning('Неудачная попытка входа: %s', username)
             flash('Неверное имя пользователя или пароль', 'danger')
+            return redirect(url_for('auth.login'))
+        
+        if user.is_blocked:
+            logger.warning('Попытка входа заблокированного пользователя: %s', username)
+            flash('Ваш аккаунт заблокирован. Обратитесь к администратору.', 'danger')
             return redirect(url_for('auth.login'))
         
         login_user(user, remember=remember)
@@ -163,3 +168,89 @@ def edit_profile():
             return redirect(url_for('auth.edit_profile'))
     
     return render_template('auth/edit_profile.html')
+
+
+# === Админ-панель управления пользователями ===
+
+@bp.route('/admin/users')
+@login_required
+def admin_users():
+    """Список пользователей (только для admin)"""
+    if not current_user.is_admin():
+        abort(403)
+    users = User.query.order_by(User.created_at.desc()).all()
+    return render_template('auth/admin_users.html', users=users)
+
+
+@bp.route('/admin/users/<int:id>/role', methods=['POST'])
+@login_required
+def change_role(id):
+    """Изменение роли пользователя"""
+    if not current_user.is_admin():
+        abort(403)
+    
+    user = User.query.get_or_404(id)
+    
+    if user.id == current_user.id:
+        flash('Нельзя изменить свою собственную роль', 'danger')
+        return redirect(url_for('auth.admin_users'))
+    
+    new_role = request.form.get('role', '')
+    if new_role not in ('admin', 'manager', 'user'):
+        flash('Некорректная роль', 'danger')
+        return redirect(url_for('auth.admin_users'))
+    
+    user.role = new_role
+    db.session.commit()
+    logger.info('Роль пользователя %s изменена на %s', user.username, new_role)
+    flash(f'Роль пользователя {user.username} изменена на «{new_role}»', 'success')
+    return redirect(url_for('auth.admin_users'))
+
+
+@bp.route('/admin/users/<int:id>/toggle-block', methods=['POST'])
+@login_required
+def toggle_block(id):
+    """Блокировка/разблокировка пользователя"""
+    if not current_user.is_admin():
+        abort(403)
+    
+    user = User.query.get_or_404(id)
+    
+    if user.id == current_user.id:
+        flash('Нельзя заблокировать самого себя', 'danger')
+        return redirect(url_for('auth.admin_users'))
+    
+    user.is_blocked = not user.is_blocked
+    db.session.commit()
+    
+    status = 'заблокирован' if user.is_blocked else 'разблокирован'
+    logger.info('Пользователь %s %s', user.username, status)
+    flash(f'Пользователь {user.username} {status}', 'success')
+    return redirect(url_for('auth.admin_users'))
+
+
+@bp.route('/admin/users/<int:id>/delete', methods=['POST'])
+@login_required
+def delete_user(id):
+    """Удаление пользователя"""
+    if not current_user.is_admin():
+        abort(403)
+    
+    user = User.query.get_or_404(id)
+    
+    if user.id == current_user.id:
+        flash('Нельзя удалить самого себя', 'danger')
+        return redirect(url_for('auth.admin_users'))
+    
+    username = user.username
+    try:
+        db.session.delete(user)
+        db.session.commit()
+        logger.info('Пользователь удалён: %s', username)
+        flash(f'Пользователь {username} удалён', 'success')
+    except Exception as e:
+        db.session.rollback()
+        logger.error('Ошибка при удалении пользователя: %s', e)
+        flash('Произошла ошибка при удалении', 'danger')
+    
+    return redirect(url_for('auth.admin_users'))
