@@ -1,11 +1,12 @@
 import logging
 from flask import Blueprint, render_template, request, Response
-from flask_login import login_required
+from flask_login import login_required, current_user
 from datetime import datetime, date, timedelta
 from sqlalchemy import func
 from sqlalchemy.orm import joinedload
 from app import db
 from app.models import Meeting, Employee, Room, Department, Task, MeetingType
+from app.decorators import manager_required
 
 bp = Blueprint('reports', __name__, url_prefix='/reports')
 logger = logging.getLogger(__name__)
@@ -13,6 +14,7 @@ logger = logging.getLogger(__name__)
 
 @bp.route('/')
 @login_required
+@manager_required
 def index():
     """Главная страница отчётов"""
     return render_template('reports/index.html')
@@ -20,6 +22,7 @@ def index():
 
 @bp.route('/meetings')
 @login_required
+@manager_required
 def meetings_report():
     """Отчёт по совещаниям"""
     # Параметры фильтрации
@@ -88,6 +91,7 @@ def meetings_report():
 
 @bp.route('/rooms')
 @login_required
+@manager_required
 def rooms_report():
     """Отчёт по загрузке переговорных комнат"""
     date_from = request.args.get('date_from', '')
@@ -111,40 +115,26 @@ def rooms_report():
         from_date = date.today().replace(day=1)
         to_date = date.today()
     
-    # Оптимизация: один запрос вместо N+1 (Fix #9)
-    room_meeting_stats = db.session.query(
-        Room.id,
-        func.count(Meeting.id).label('meetings_count'),
-        func.sum(
-            func.cast(
-                (func.julianday(
-                    func.datetime(Meeting.date, Meeting.end_time)
-                ) - func.julianday(
-                    func.datetime(Meeting.date, Meeting.start_time)
-                )) * 24 * 60,
-                db.Integer
-            )
-        ).label('total_minutes')
-    ).outerjoin(Meeting, db.and_(
-        Meeting.room_id == Room.id,
-        Meeting.date >= from_date,
-        Meeting.date <= to_date,
-        Meeting.status != 'cancelled'
-    )).filter(Room.is_active == True).group_by(Room.id).all()
-    
-    rooms = {r.id: r for r in Room.query.filter_by(is_active=True).all()}
+    # Загружаем комнаты и совещания, считаем в Python (совместимо с PostgreSQL и SQLite)
+    rooms_list = Room.query.filter_by(is_active=True).all()
     total_days = (to_date - from_date).days + 1
     max_minutes = total_days * 8 * 60  # 8 часов в рабочий день
     
     room_stats = []
-    for room_id, meetings_count, total_minutes in room_meeting_stats:
-        if room_id not in rooms:
-            continue
-        total_minutes = total_minutes or 0
+    for room in rooms_list:
+        meetings = Meeting.query.filter(
+            Meeting.room_id == room.id,
+            Meeting.date >= from_date,
+            Meeting.date <= to_date,
+            Meeting.status != 'cancelled'
+        ).all()
+        
+        total_minutes = sum(m.duration_minutes for m in meetings)
         utilization = (total_minutes / max_minutes * 100) if max_minutes > 0 else 0
+        
         room_stats.append({
-            'room': rooms[room_id],
-            'meetings_count': meetings_count,
+            'room': room,
+            'meetings_count': len(meetings),
             'total_hours': round(total_minutes / 60, 1),
             'utilization': round(utilization, 1)
         })
@@ -160,6 +150,7 @@ def rooms_report():
 
 @bp.route('/employees')
 @login_required
+@manager_required
 def employees_report():
     """Отчёт по участию сотрудников"""
     date_from = request.args.get('date_from', '')
@@ -235,6 +226,7 @@ def employees_report():
 
 @bp.route('/tasks')
 @login_required
+@manager_required
 def tasks_report():
     """Отчёт по задачам"""
     status = request.args.get('status', '')
@@ -277,6 +269,7 @@ def tasks_report():
 
 @bp.route('/statistics')
 @login_required
+@manager_required
 def statistics():
     """Общая статистика системы"""
     today = date.today()
