@@ -18,7 +18,7 @@ def _escape_like(search_term):
 @bp.route('/')
 @login_required
 def index():
-    """Список всех совещаний"""
+    """Список совещаний"""
     page = request.args.get('page', 1, type=int)
     status = request.args.get('status', '')
     date_from = request.args.get('date_from', '')
@@ -26,6 +26,20 @@ def index():
     search = request.args.get('search', '').strip()
     
     query = Meeting.query
+    
+    # Фильтрация для обычного пользователя — только свои совещания
+    if not current_user.is_manager() and current_user.employee_id:
+        query = query.outerjoin(
+            meeting_participants, Meeting.id == meeting_participants.c.meeting_id
+        ).filter(
+            db.or_(
+                meeting_participants.c.employee_id == current_user.employee_id,
+                Meeting.organizer_id == current_user.employee_id
+            )
+        ).distinct()
+    elif not current_user.is_manager() and not current_user.employee_id:
+        # Пользователь без привязки — пустой список
+        query = query.filter(Meeting.id == -1)
     
     if status:
         query = query.filter(Meeting.status == status)
