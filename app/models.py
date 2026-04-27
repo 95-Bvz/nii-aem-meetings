@@ -20,6 +20,7 @@ class User(UserMixin, db.Model):
     email = db.Column(db.String(120), unique=True, nullable=False, index=True)
     password_hash = db.Column(db.String(256))
     role = db.Column(db.String(20), default='user')  # admin, manager, user
+    is_blocked = db.Column(db.Boolean, default=False)
     employee_id = db.Column(db.Integer, db.ForeignKey('employee.id'), nullable=True)
     created_at = db.Column(db.DateTime, default=lambda: datetime.now(timezone.utc))
     
