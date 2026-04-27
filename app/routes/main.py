@@ -17,90 +17,35 @@ def index():
     """Главная страница - дашборд"""
     today = date.today()
     
-    # Определяем, нужно ли фильтровать по сотруднику (для роли user)
-    is_regular_user = not current_user.is_manager()
-    employee_id = current_user.employee_id if is_regular_user else None
+    # Статистика — видна всем пользователям
+    stats = {
+        'total_meetings': Meeting.query.count(),
+        'today_meetings': Meeting.query.filter(Meeting.date == today).count(),
+        'week_meetings': Meeting.query.filter(
+            Meeting.date >= today,
+            Meeting.date <= today + timedelta(days=7)
+        ).count(),
+        'total_employees': Employee.query.filter_by(is_active=True).count(),
+        'total_rooms': Room.query.filter_by(is_active=True).count(),
+        'pending_tasks': Task.query.filter_by(status='pending').count(),
+    }
     
-    if is_regular_user and employee_id:
-        from app.models import meeting_participants
-        # Совещания, где пользователь — участник или организатор
-        my_meeting_ids = db.session.query(Meeting.id).outerjoin(
-            meeting_participants, Meeting.id == meeting_participants.c.meeting_id
-        ).filter(
-            db.or_(
-                meeting_participants.c.employee_id == employee_id,
-                Meeting.organizer_id == employee_id
-            )
-        ).distinct().subquery()
-        
-        stats = {
-            'total_meetings': Meeting.query.filter(Meeting.id.in_(db.session.query(my_meeting_ids))).count(),
-            'today_meetings': Meeting.query.filter(
-                Meeting.id.in_(db.session.query(my_meeting_ids)),
-                Meeting.date == today
-            ).count(),
-            'week_meetings': Meeting.query.filter(
-                Meeting.id.in_(db.session.query(my_meeting_ids)),
-                Meeting.date >= today,
-                Meeting.date <= today + timedelta(days=7)
-            ).count(),
-            'total_employees': Employee.query.filter_by(is_active=True).count(),
-            'total_rooms': Room.query.filter_by(is_active=True).count(),
-            'pending_tasks': Task.query.filter_by(status='pending', responsible_id=employee_id).count(),
-        }
-        
-        upcoming_meetings = Meeting.query.filter(
-            Meeting.id.in_(db.session.query(my_meeting_ids)),
-            Meeting.date >= today,
-            Meeting.status.in_(['planned', 'ongoing'])
-        ).order_by(Meeting.date, Meeting.start_time).limit(5).all()
-        
-        today_meetings = Meeting.query.filter(
-            Meeting.id.in_(db.session.query(my_meeting_ids)),
-            Meeting.date == today
-        ).order_by(Meeting.start_time).all()
-        
-        overdue_tasks = Task.query.filter(
-            Task.responsible_id == employee_id,
-            Task.status.in_(['pending', 'in_progress']),
-            Task.deadline < today
-        ).limit(5).all()
-    elif is_regular_user and not employee_id:
-        # Пользователь без привязки к сотруднику — показываем пустой дашборд
-        stats = {
-            'total_meetings': 0, 'today_meetings': 0, 'week_meetings': 0,
-            'total_employees': 0, 'total_rooms': 0, 'pending_tasks': 0,
-        }
-        upcoming_meetings = []
-        today_meetings = []
-        overdue_tasks = []
-    else:
-        # Manager/Admin — видят всё
-        stats = {
-            'total_meetings': Meeting.query.count(),
-            'today_meetings': Meeting.query.filter(Meeting.date == today).count(),
-            'week_meetings': Meeting.query.filter(
-                Meeting.date >= today,
-                Meeting.date <= today + timedelta(days=7)
-            ).count(),
-            'total_employees': Employee.query.filter_by(is_active=True).count(),
-            'total_rooms': Room.query.filter_by(is_active=True).count(),
-            'pending_tasks': Task.query.filter_by(status='pending').count(),
-        }
-        
-        upcoming_meetings = Meeting.query.filter(
-            Meeting.date >= today,
-            Meeting.status.in_(['planned', 'ongoing'])
-        ).order_by(Meeting.date, Meeting.start_time).limit(5).all()
-        
-        today_meetings = Meeting.query.filter(
-            Meeting.date == today
-        ).order_by(Meeting.start_time).all()
-        
-        overdue_tasks = Task.query.filter(
-            Task.status.in_(['pending', 'in_progress']),
-            Task.deadline < today
-        ).limit(5).all()
+    # Ближайшие совещания
+    upcoming_meetings = Meeting.query.filter(
+        Meeting.date >= today,
+        Meeting.status.in_(['planned', 'ongoing'])
+    ).order_by(Meeting.date, Meeting.start_time).limit(5).all()
+    
+    # Сегодняшние совещания
+    today_meetings = Meeting.query.filter(
+        Meeting.date == today
+    ).order_by(Meeting.start_time).all()
+    
+    # Просроченные задачи
+    overdue_tasks = Task.query.filter(
+        Task.status.in_(['pending', 'in_progress']),
+        Task.deadline < today
+    ).limit(5).all()
     
     return render_template('index.html', 
                           stats=stats,
