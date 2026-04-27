@@ -492,6 +492,13 @@
                         <i class="bi bi-diagram-3"></i> Подразделения
                     </a>
                 </li>
+                {% if current_user.is_admin() %}
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('auth.admin_users') }}">
+                        <i class="bi bi-shield-lock"></i> Пользователи
+                    </a>
+                </li>
+                {% endif %}
                 <hr class="mx-2">
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('auth.profile') }}">
@@ -562,6 +569,14 @@
                         <i class="bi bi-diagram-3"></i> Подразделения
                     </a>
                 </li>
+                {% if current_user.is_admin() %}
+                <hr class="mx-3">
+                <li class="nav-item">
+                    <a class="nav-link" href="{{ url_for('auth.admin_users') }}">
+                        <i class="bi bi-shield-lock"></i> Пользователи
+                    </a>
+                </li>
+                {% endif %}
             </ul>
         </nav>
         {% endif %}
