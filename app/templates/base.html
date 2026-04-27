@@ -473,12 +473,14 @@
                         <i class="bi bi-door-open"></i> Переговорные
                     </a>
                 </li>
+                {% if current_user.is_manager() %}
                 <li class="nav-item">
                     <a class="nav-link {{ 'active' if 'reports' in request.endpoint }}" 
                        href="{{ url_for('reports.index') }}">
                         <i class="bi bi-bar-chart"></i> Отчёты
                     </a>
                 </li>
+                {% endif %}
                 <hr class="mx-2">
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('meetings.types') }}">
@@ -541,12 +543,14 @@
                         <i class="bi bi-door-open"></i> Переговорные
                     </a>
                 </li>
+                {% if current_user.is_manager() %}
                 <li class="nav-item">
                     <a class="nav-link {{ 'active' if 'reports' in request.endpoint }}" 
                        href="{{ url_for('reports.index') }}">
                         <i class="bi bi-bar-chart"></i> Отчёты
                     </a>
                 </li>
+                {% endif %}
                 <hr class="mx-3">
                 <li class="nav-item">
                     <a class="nav-link" href="{{ url_for('meetings.types') }}">
