@@ -27,20 +27,6 @@ def index():
     
     query = Meeting.query
     
-    # Фильтрация для обычного пользователя — только свои совещания
-    if not current_user.is_manager() and current_user.employee_id:
-        query = query.outerjoin(
-            meeting_participants, Meeting.id == meeting_participants.c.meeting_id
-        ).filter(
-            db.or_(
-                meeting_participants.c.employee_id == current_user.employee_id,
-                Meeting.organizer_id == current_user.employee_id
-            )
-        ).distinct()
-    elif not current_user.is_manager() and not current_user.employee_id:
-        # Пользователь без привязки — пустой список
-        query = query.filter(Meeting.id == -1)
-    
     if status:
         query = query.filter(Meeting.status == status)
     
@@ -65,7 +51,6 @@ def index():
 
 @bp.route('/create', methods=['GET', 'POST'])
 @login_required
-@manager_required  # Fix #1
 def create():
     """Создание нового совещания"""
     if request.method == 'POST':
